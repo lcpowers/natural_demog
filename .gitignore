@@ -1,0 +1,13 @@
+.Rproj.user
+.Rhistory
+.RData
+.Ruserdata
+
+data/shapefiles/
+data/zips/*
+data/dems/
+data/1m_3DEP/
+data/climate/snotel*
+
+**/.DS_Store
+r/.claude/
