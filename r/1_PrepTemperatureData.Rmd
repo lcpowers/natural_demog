@@ -1,0 +1,808 @@
+---
+title: "Compile temp data"
+output: html_document
+date: "2026-04-03"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+
+```{r}
+rm(list=ls())
+library(tidyverse)
+library(MuMIn)
+library(patchwork)
+library(snotelr)
+library(parallel)
+skip_rows_pendants <- 1
+
+time_12to24hr <- function(col){
+  dt <- as.POSIXct(col, format = "%m/%d/%y %I:%M:%S %p")
+  return(dt)
+}
+
+niwot_fn <- "data/climate/SoilTemps/niwot"
+guanella_fn <- "data/climate/SoilTemps/guanella"
+
+niwot_prism_fns <- list.files("data/climate/prism/Niwot",full.names = T)
+
+niwot_prism_lower <- read_csv("data/climate/prism/Niwot/niwot_lower.csv",skip=10)
+names(niwot_prism_lower) <- c("date","pr_ppt_lower","pr_tmin_lower","pr_tmean_lower","pr_tmax_lower")
+
+niwot_prism_upper <- read_csv("data/climate/prism/Niwot/niwot_upper.csv",skip=10)
+names(niwot_prism_upper) <- c("date","pr_ppt_upper","pr_tmin_upper","pr_tmean_upper","pr_tmax_upper")
+
+guanella_prism_lower <- read_csv("data/climate/prism/guanella/guanella_lower.csv",skip=10)
+names(guanella_prism_lower) <- c("date","pr_ppt_lower","pr_tmin_lower","pr_tmean_lower","pr_tmax_lower")
+
+guanella_prism_upper <- read_csv("data/climate/prism/guanella/guanella_upper.csv",skip=10)
+names(guanella_prism_upper) <- c("date","pr_ppt_upper","pr_tmin_upper","pr_tmean_upper","pr_tmax_upper")
+
+jones_prism <- read_csv("data/climate/prism/Jones/jp_upperLower.csv",skip=10)
+names(jones_prism) <- c("date","pr_ppt","pr_tmin","pr_tmean","pr_tmax")
+
+# SNOTEL
+# niwot: 838 (University Camp), guanella: 935 (Jack walker gulch), jones: 335 (Berthoud Summit)
+# snotel_df <- snotel_info() %>% 
+#   filter(state=="CO") %>% 
+#   arrange(site_name) %>% 
+#   filter(county%in%c("Clear Creek","Boulder","Grand"))
+# snotel_sites <- c(niwot = 838, guanella = 935, jones = 335)
+# 
+# snotel_raw <- lapply(names(snotel_sites), function(site){
+#   snotel_download(site_id = snotel_sites[[site]], path = tempdir(), internal = TRUE) %>%
+#     mutate(date = as.Date(date),
+#            site = site) %>%
+#     select(date, site,
+#            snotel_swe = snow_water_equivalent,
+#            snotel_snow_depth = snow_depth,
+#            snotel_tmax = temperature_max,
+#            snotel_tmin = temperature_min,
+#            snotel_tmean = temperature_mean)
+# })
+# names(snotel_raw) <- names(snotel_sites)
+# saveRDS(snotel_raw,"data/climate/snotel.RDS")
+
+snotel_raw <- readRDS("data/climate/snotel.RDS")
+
+niwot_snotel <- snotel_raw[["niwot"]] %>% select(-site)
+guanella_snotel <- snotel_raw[["guanella"]] %>% select(-site)
+jones_snotel <- snotel_raw[["jones"]] %>% select(-site)
+
+```
+
+# =============================
+# Niwot
+# =============================
+
+## Niwot 2023
+```{r niwot_temps_2023}
+
+pops <- c("SouthLower","SouthUpper","NorthUpper","NorthLower","TopUpper","TopLower")
+year <- "2023"
+
+niwot_temps_2023 <- NULL
+
+for(pop in pops){
+  
+  pop.files <- list.files(path = paste0("data/climate/SoilTemps/niwot/",year),
+                          pattern = pop, full.names = T)
+  
+  for(fn in pop.files){
+
+    if(str_detect(fn,"iButton")) next
+      
+    tmp <- read_csv(fn,skip = skip_rows_pendants) %>% 
+      select(contains(c("Date Time","Temp"))) %>% 
+      rename_with(~c("dt", "temp"), .cols = c(1, 2)) %>% 
+      mutate(dt = time_12to24hr(dt),
+             date = as.Date(dt),
+             time = format(dt, "%H:%M:%S"),
+             year = year(dt),
+             site = "niwot",
+             pop = pop,
+             reader = "hobo",
+             fn=basename(fn)) %>% 
+      filter(!is.na(temp))
+
+    
+    niwot_temps_2023 <- rbind(niwot_temps_2023,tmp) %>% 
+      unique();rm(tmp)
+    
+  }
+
+}
+
+```
+
+## Niwot 2024
+```{r niwot_temps_2024}
+pops <- c("SouthLower","SouthUpper","NorthUpper","NorthLower","TopUpper","TopLower")
+year <- "2024"
+
+niwot_temps_2024 <- NULL
+
+for(pop in pops){
+  
+  pop.files <- list.files(path = paste0("data/climate/SoilTemps/niwot/",year),
+                          pattern = pop, full.names = T)
+  
+  for(fn in pop.files){
+    
+    if(str_detect(fn,"iButton")) next
+      
+    tmp <- read_csv(fn,skip = skip_rows_pendants) %>% 
+      select(contains(c("Date Time","Temp"))) %>% 
+      rename_with(~c("dt", "temp"), .cols = c(1, 2)) %>% 
+      mutate(dt = time_12to24hr(dt),
+             date = as.Date(dt),
+             time = format(dt, "%H:%M:%S"),
+             year = year(dt),
+             site = "niwot",
+             pop = pop,
+             reader = "hobo",
+             fn=basename(fn)) %>% 
+      filter(!is.na(temp))
+    
+    if(basename(fn)=="nr_NorthLower_A.csv"){tmp <- tmp[-c(1:6),]}
+    if(basename(fn)=="nr_TopLower_A.csv"){tmp <- tmp[-c(1),]}
+    if(basename(fn)=="nr_TopUpper_B.csv"){tmp <- tmp[-c(1),]}
+    if(basename(fn)=="nr_NorthUpper_B.csv"){tmp <- tmp[-c(1),]}
+    if(basename(fn)=="nr_NorthUpper_A.csv"){tmp <- tmp[-c(1:3),]}
+    if(basename(fn)=="nr_NorthLower_A.csv"){tmp <- tmp[-c(1:6),]}
+    if(basename(fn)=="nr_NorthLower_B.csv"){tmp <- tmp[-c(1:2),]}
+
+    niwot_temps_2024 <- rbind(niwot_temps_2024,tmp) %>% 
+      unique();rm(tmp)
+    
+  }
+
+}
+```
+
+## Niwot 2025
+```{r niwot_temps_2025}
+pops <- c("SouthLower","SouthUpper","NorthUpper","NorthLower","TopUpper","TopLower")
+year <- "2025"
+
+niwot_temps_2025 <- NULL
+
+for(pop in pops){
+  
+  pop.files <- list.files(path = paste0("data/climate/SoilTemps/niwot/",year),
+                          pattern = pop, full.names = T)
+  
+  for(fn in pop.files){
+    
+    if(str_detect(fn,"iButton")) next
+      
+    tmp <- read_csv(fn,skip = skip_rows_pendants) %>% 
+      select(contains(c("Date Time","Temp"))) %>% 
+      rename_with(~c("dt", "temp"), .cols = c(1, 2)) %>% 
+      mutate(dt = time_12to24hr(dt),
+             date = as.Date(dt),
+             time = format(dt, "%H:%M:%S"),
+             year = year(dt),
+             site = "niwot",
+             pop = pop,
+             reader = "hobo",
+             fn=basename(fn))
+    
+    niwot_temps_2025 <- rbind(niwot_temps_2025,tmp) %>% 
+      unique();rm(tmp)
+    
+  }
+
+}
+```
+
+## Niwot bind data
+```{r niwot_rbind}
+all_niwot_temps <- rbind(niwot_temps_2023,niwot_temps_2024) %>% 
+  rbind(.,niwot_temps_2025) %>% 
+  filter(!is.na(temp))
+
+date.vec <- data.frame(date=seq.Date((min(all_niwot_temps$date,na.rm=T)+1),max(all_niwot_temps$date,na.rm=T)))
+
+daily_niwot_temps_long <- all_niwot_temps %>% 
+  group_by(date,site,pop) %>% 
+  summarize(n.temps = n(),
+            meanT = ifelse(n.temps>=6,mean(temp),NA),
+            .groups = "drop") %>% 
+  select(-n.temps) 
+
+daily_niwot_temps_nonmissing <- daily_niwot_temps_long %>% 
+  pivot_wider(id_cols=c(date,site),names_from = pop,values_from = meanT) %>% 
+  tail(.,-1) %>% # remove the first row of NAs
+  merge(date.vec,.,all=T) %>% 
+  filter(date>"2022-09-17") %>% 
+  merge(.,niwot_prism_upper,by="date") %>% 
+  merge(.,niwot_snotel,by="date",all.x=T) %>%
+  filter(date<"2025-08-31") %>% 
+  select(-c(pr_tmin_upper,pr_tmax_upper,snotel_tmax,snotel_tmin))
+
+daily_niwot_temps_nonmissing %>% select(where(is.numeric)) %>%  cor(use = "pairwise.complete.obs") %>% corrplot::corrplot()    
+```
+
+## Predict niwot
+```{r pred_Niwot}
+
+pops <- c("SouthLower","SouthUpper","NorthUpper","NorthLower","TopUpper","TopLower")
+
+daily_niwot_temps_filled <- daily_niwot_temps_nonmissing %>% 
+  mutate(doy = yday(date),
+         year = year(date))
+
+plot_list <- list()
+
+for(pop in pops){
+  print(pop)
+  
+  rows_na <- is.na(daily_niwot_temps_filled[[pop]])
+  cols_keep <- colSums(is.na(daily_niwot_temps_filled[rows_na, ])) == 0
+  cols_keep[pop] <- TRUE
+
+  lm.dats <- daily_niwot_temps_filled[cols_keep]
+  lm.dats <- lm.dats %>%
+    mutate(doy = yday(date),
+           year = year(date)) %>%
+    select(-date,-site,-contains("ppt"),-contains("_pred")) %>% 
+    na.omit()
+  
+  # print(names(lm.dats))
+  
+  if(pop!="NorthLower"&"NorthLower"%in%names(lm.dats)){
+    lm.dats <- select(lm.dats,-NorthLower)
+  }
+
+
+  pred_cols <- setdiff(names(lm.dats), c(pop, "doy"))
+
+  f <- as.formula(
+    paste(pop, "~", paste(pred_cols, collapse = " + "), "+ doy + I(doy^2)")
+  )
+  
+ tmp.lm <- lm(formula = f,data = lm.dats,na.action = na.fail)
+
+ tmp.dredge <- dredge(tmp.lm,
+                       # trace=2,
+                       m.lim = c(0,8),
+                       extra = list(R2 = function(x) summary(x)$r.squared,
+                                    adjR2 = function(x) summary(x)$adj.r.squared))
+  
+  best.mod <- get.models(tmp.dredge,subset = 1)[[1]]
+  
+  daily_niwot_temps_filled[paste0(pop,"_pred")] <- predict(object = best.mod,newdata=daily_niwot_temps_filled)
+ 
+  p_line = ggplot(daily_niwot_temps_filled,aes(x=!!sym(pop),y=!!sym(paste0(pop,"_pred"))))+
+    geom_point()+
+    geom_abline(slope=1)+
+    theme_classic()+
+    labs(title=pop,subtitle="Niwot",x=pop,y=paste0(pop," predicted"))
+
+  p_ts = ggplot(daily_niwot_temps_filled,aes(x=date))+
+    geom_point(aes(y=.data[[pop]],color="actual"),size=2)+
+    geom_point(aes(y=.data[[paste0(pop,"_pred")]],color="predicted"))+
+    theme_classic(base_size = 12)+
+    labs(title=pop,subtitle="Niwot",x="date",y="mean daily temp (C)")+
+    scale_color_manual(values=c("actual"="blue","predicted"="sienna1"))
+
+  p_hist = ggplot(daily_niwot_temps_filled,aes(x=!!sym(pop)-!!sym(paste0(pop,"_pred"))))+
+    geom_histogram(fill="grey90",color="grey30",bins=50)+
+    geom_vline(xintercept = 0,color="red")+
+    theme_classic()+
+    labs(title=pop,subtitle="Niwot",x="actual-predicted")
+  
+  p <- (p_line | p_hist) / p_ts
+
+  plot_list[[pop]] <- p
+   
+}
+
+lapply(plot_list, print)
+```
+
+# =============================
+# Guanella
+# =============================
+
+## Guanella 2023
+```{r guanella_temps_2023}
+
+pops <- c("SouthLower","SouthUpper","NorthUpper","NorthLower","TopUpper","TopLower")
+year <- "2023"
+
+guanella_temps_2023 <- NULL
+
+for(pop in pops){
+  
+  pop.files <- list.files(path = paste0("data/climate/SoilTemps/guanella/",year),
+                          pattern = pop, full.names = T)
+  
+  for(fn in pop.files){
+
+    if(str_detect(fn,"iButton")) next
+      
+    tmp <- read_csv(fn,skip = skip_rows_pendants) %>% 
+      select(contains(c("Date Time","Temp"))) %>% 
+      rename_with(~c("dt", "temp"), .cols = c(1, 2)) %>% 
+      mutate(dt = time_12to24hr(dt),
+             date = as.Date(dt),
+             time = format(dt, "%H:%M:%S"),
+             year = year(dt),
+             site = "guanella",
+             pop = pop,
+             reader = "hobo",
+             fn=basename(fn))
+    
+    guanella_temps_2023 <- rbind(guanella_temps_2023,tmp) %>% 
+      unique();rm(tmp)
+    
+  }
+
+}
+
+```
+
+## Guanella 2024
+```{r guanella_temps_2024}
+
+pops <- c("SouthLower","SouthUpper","NorthUpper","NorthLower","TopUpper","TopLower")
+year <- "2024"
+
+guanella_temps_2024 <- NULL
+
+for(pop in pops){
+  
+  pop.files <- list.files(path = paste0("data/climate/SoilTemps/guanella/",year),
+                          pattern = pop, full.names = T)
+  
+  for(fn in pop.files){
+    # fn <- pop.files[2]
+    
+    if(str_detect(fn,"iButton")) next
+      
+    tmp <- read_csv(fn,skip = skip_rows_pendants) %>% 
+      select(contains(c("Date Time","Temp"))) %>% 
+      rename_with(~c("dt", "temp"), .cols = c(1, 2)) %>% 
+      mutate(dt = time_12to24hr(dt),
+             date = as.Date(dt),
+             time = format(dt, "%H:%M:%S"),
+             year = year(dt),
+             site = "guanella",
+             pop = pop,
+             reader = "hobo",
+             fn=basename(fn)) %>% 
+      filter(!is.na(temp))
+    
+    if(basename(fn)=="gp_NorthUpper_A.csv"){tmp <- tmp[-c(1:5),]}
+    if(basename(fn)=="gp_SouthLower_A.csv"){tmp <- tmp[-c(1:2),]}
+    if(basename(fn)=="gp_SouthLower_B.csv"){tmp <- tmp[-c(1:7),]}
+    if(basename(fn)=="gp_TopLower_A.csv"){tmp <- tmp[-c(1:2),]}
+    if(basename(fn)=="gp_TopLower_B.csv"){tmp <- tmp[-c(1:7),]}
+    
+    guanella_temps_2024 <- rbind(guanella_temps_2024,tmp) %>% 
+      unique();rm(tmp)
+    
+  }
+
+}
+
+```
+
+## Guanella 2025
+```{r guanella_temps_2025}
+
+pops <- c("SouthLower","SouthUpper","NorthUpper","NorthLower","TopUpper","TopLower")
+year <- "2025"
+
+guanella_temps_2025 <- NULL
+
+for(pop in pops){
+  
+  pop.files <- list.files(path = paste0("data/climate/SoilTemps/guanella/",year),
+                          pattern = pop, full.names = T)
+  
+  for(fn in pop.files){
+
+    if(str_detect(fn,"iButton")) next
+    if(str_detect(fn,"NorthLower_A_sept")) next
+      
+    tmp <- read_csv(fn,skip = skip_rows_pendants) %>% 
+      select(contains(c("Date Time","Temp"))) %>% 
+      rename_with(~c("dt", "temp"), .cols = c(1, 2)) %>% 
+      mutate(dt = time_12to24hr(dt),
+             date = as.Date(dt),
+             time = format(dt, "%H:%M:%S"),
+             year = year(dt),
+             site = "guanella",
+             pop = pop,
+             reader = "hobo",
+             fn=basename(fn))
+    
+    if(basename(fn)=="gp_TopUpper_B_sept.csv"){
+      
+      tmp = tmp %>% 
+        filter(!date%in%seq.Date("2024-06-25","2025-07-27"))
+      
+    }
+    
+    guanella_temps_2025 <- rbind(guanella_temps_2025,tmp) %>%
+      unique();rm(tmp)
+  }
+
+}
+
+
+```
+
+## Guanella bind data
+```{r guanella_rbind}
+all_guanella_temps <- rbind(guanella_temps_2023,guanella_temps_2024) %>%
+  rbind(.,guanella_temps_2025) %>%
+  filter(!is.na(temp))
+
+date.vec <- data.frame(date=seq.Date((min(all_guanella_temps$date,na.rm=T)+1),max(all_guanella_temps$date,na.rm=T)))
+
+daily_guanella_temps_nonmissing <- all_guanella_temps %>%
+  group_by(date,site,pop) %>%
+  summarize(n.temps = n(),
+            meanT = ifelse(n.temps>=6,mean(temp),NA),
+            .groups = "drop") %>%
+  select(-n.temps) %>%
+  pivot_wider(id_cols=c(date,site),names_from = pop,values_from = meanT) %>%
+  tail(.,-1) %>% # remove the first row of NAs
+  merge(date.vec,.,all=T) %>%
+  tail(-1) %>%
+  merge(.,guanella_prism_upper,by="date") %>%
+  # merge(.,guanella_prism_lower,by="date") %>%
+  merge(.,guanella_snotel,by="date",all.x=T) %>% 
+  select(-c(pr_tmin_upper,pr_tmax_upper,snotel_tmax,snotel_tmin))
+
+daily_guanella_temps_nonmissing %>% select(where(is.numeric)) %>%  cor(use = "pairwise.complete.obs") %>% corrplot::corrplot()   
+```
+
+## Predict guanella
+```{r pred_Guanella}
+
+pops <- c("SouthLower","SouthUpper","NorthUpper","NorthLower","TopUpper","TopLower")
+
+daily_guanella_temps_filled <- daily_guanella_temps_nonmissing %>%
+  mutate(doy = yday(date),
+         year = year(date))
+plot_list <- list()
+
+
+for(pop in pops){
+  print(pop)
+
+  rows_na <- is.na(daily_guanella_temps_filled[[pop]])
+  cols_keep <- colSums(is.na(daily_guanella_temps_filled[rows_na, ])) == 0
+  cols_keep[pop] <- TRUE
+
+  lm.dats <- daily_guanella_temps_filled[cols_keep]
+  lm.dats <- lm.dats %>%
+    mutate(doy = yday(date),
+           year = year(date)) %>%
+    select(-date,-site,-contains("ppt"),-contains("_pred")) %>%
+    na.omit()
+
+ # head(lm.dats)
+
+  pred_cols <- setdiff(names(lm.dats), c(pop, "doy"))
+
+  f <- as.formula(
+    paste(pop, "~", paste(pred_cols, collapse = " + "), "+ doy + I(doy^2)")
+  )
+
+  tmp.lm <- lm(formula = f, data = lm.dats, na.action = na.fail)
+
+  tmp.dredge <- dredge(tmp.lm,
+                       trace=2,
+                       m.lim = c(0,8),
+                       extra = list(R2 = function(x) summary(x)$r.squared,
+                                    adjR2 = function(x) summary(x)$adj.r.squared))
+  best.mod <- get.models(tmp.dredge,subset = 1)[[1]]
+
+  daily_guanella_temps_filled[paste0(pop,"_pred")] <- predict(object = best.mod,newdata=daily_guanella_temps_filled)
+
+  p_line = ggplot(daily_guanella_temps_filled,aes(x=!!sym(pop),y=!!sym(paste0(pop,"_pred"))))+
+    geom_point()+
+    geom_abline(slope=1)+
+    theme_classic()+
+    labs(title=pop,subtitle="GP",x=pop,y=paste0(pop," predicted"))
+
+  p_ts = ggplot(daily_guanella_temps_filled,aes(x=date))+
+    geom_point(aes(y=.data[[pop]],color="actual"),size=2)+
+    geom_point(aes(y=.data[[paste0(pop,"_pred")]],color="predicted"))+
+    theme_classic(base_size = 12)+
+    labs(title=pop,subtitle="GP",x="date",y="mean daily temp (C)")+
+    scale_color_manual(values=c("actual"="blue","predicted"="sienna1"))
+
+  p_hist = ggplot(daily_guanella_temps_filled,aes(x=!!sym(pop)-!!sym(paste0(pop,"_pred"))))+
+    geom_histogram(fill="grey90",color="grey30",bins=50)+
+    geom_vline(xintercept = 0,color="red")+
+    theme_classic()+
+    labs(title=pop,subtitle="GP",x="actual-predicted")
+
+  p <- (p_line | p_hist) / p_ts
+
+  plot_list[[pop]] <- p
+
+}
+
+lapply(plot_list, print)
+```
+
+# =============================
+# Jones
+# =============================
+## Jones 2023
+```{r jones_temps_2023}
+
+pops <- c("SouthEast","SouthWest","NorthEast","NorthWest","TopEast","TopWest")
+year <- "2023"
+
+jones_temps_2023 <- NULL
+
+for(pop in pops){
+  
+  pop.files <- list.files(path = paste0("data/climate/SoilTemps/jones/",year),
+                          pattern = pop, full.names = T)
+  
+  for(fn in pop.files){
+    
+    if(str_detect(fn,"iButton")) next
+      
+    tmp <- read_csv(fn,skip = skip_rows_pendants) %>% 
+      select(contains(c("Date Time","Temp"))) %>% 
+      rename_with(~c("dt", "temp"), .cols = c(1, 2)) %>% 
+      mutate(dt = time_12to24hr(dt),
+             date = as.Date(dt),
+             time = format(dt, "%H:%M:%S"),
+             year = year(dt),
+             site = "jones",
+             pop = pop,
+             reader = "hobo",
+             fn=basename(fn))
+    
+    jones_temps_2023 <- rbind(jones_temps_2023,tmp) %>% 
+      unique();rm(tmp)
+    
+  }
+
+}
+
+```
+
+## Jones 2024
+```{r jones_temps_2024}
+
+pops <- c("SouthEast","SouthWest","NorthEast","NorthWest","TopEast","TopWest")
+year <- "2024"
+
+jones_temps_2024 <- NULL
+
+for(pop in pops){
+  
+  pop.files <- list.files(path = paste0("data/climate/SoilTemps/jones/",year),
+                          pattern = pop, full.names = T)
+  
+  for(fn in pop.files){
+
+    if(str_detect(fn,"iButton")) next
+    
+    tmp <- read_csv(fn,skip = skip_rows_pendants) %>% 
+      select(contains(c("Date Time","Temp"))) %>% 
+      rename_with(~c("dt", "temp"), .cols = c(1, 2)) %>% 
+      mutate(dt = time_12to24hr(dt),
+             date = as.Date(dt),
+             time = format(dt, "%H:%M:%S"),
+             year = year(dt),
+             site = "jones",
+             pop = pop,
+             reader = "hobo",
+             fn=basename(fn)) %>% 
+      arrange(date)
+    
+    if(basename(fn)=="jp_NorthEast_B.csv"){  tmp = tmp[-c(1:8),] }
+    if(basename(fn)=="jp_NorthEast_A.csv"){  tmp = tmp[-c(1),] }
+    if(basename(fn)=="jp_TopEast_A.csv"){  tmp = tmp[-c(1),] }
+    if(basename(fn)=="jp_NorthWest_A.csv"){  tmp = tmp[-c(1),] }
+    if(basename(fn)=="jp_NorthWest_B.csv"){  tmp = tmp[-c(1:11),] }
+    
+    jones_temps_2024 <- rbind(jones_temps_2024,tmp) %>% 
+      unique();rm(tmp)
+    
+  }
+
+}
+
+```
+
+## Jones 2025
+```{r jones_temps_2025}
+
+pops <- c("SouthEast","SouthWest","NorthEast","NorthWest","TopEast","TopWest")
+year <- "2025"
+
+jones_temps_2025 <- NULL
+
+for(pop in pops){
+  
+  pop.files <- list.files(path = paste0("data/climate/SoilTemps/jones/",year),
+                          pattern = pop, full.names = T)
+  
+  for(fn in pop.files){
+
+    if(str_detect(fn,"iButton")) next
+
+    tmp <- read_csv(fn,skip = skip_rows_pendants) %>% 
+      select(contains(c("Date Time","Temp"))) %>% 
+      rename_with(~c("dt", "temp"), .cols = c(1, 2)) %>% 
+      mutate(dt = time_12to24hr(dt),
+             date = as.Date(dt),
+             time = format(dt, "%H:%M:%S"),
+             year = year(dt),
+             site = "jones",
+             pop = pop,
+             reader = "hobo",
+             fn=basename(fn)) %>% 
+      filter(!is.na(temp))
+    
+    if(basename(fn)=="jp_SouthWest_B_sept.csv"){
+      tmp = filter(tmp,date>"2025-06-20")
+    }
+    
+    if(basename(fn)=="jp_TopWest_B_sept_mostlyBad.csv"){
+      tmp = filter(tmp,date<"2025-08-15"&date>"2024-08-20")
+    }
+    
+    if(str_detect(basename(fn),"TopEast")){  tmp = tmp[-c(1:5),] }
+    if(str_detect(basename(fn),"TopWest")){  tmp = tmp[-c(1:2),] }
+    if(str_detect(basename(fn),"SouthWest")){  tmp = tmp[-c(1:2),] }
+    # plot(tmp$date,tmp$temp)
+    
+    jones_temps_2025 <- rbind(jones_temps_2025,tmp) %>%
+      unique();rm(tmp)
+  }
+
+}
+
+
+```
+
+## Jones bind data
+```{r jones_rbind}
+all_jones_temps <- rbind(jones_temps_2023,jones_temps_2024) %>%
+  rbind(.,jones_temps_2025) %>%
+  filter(!is.na(temp)) %>%
+  select(-c(fn,year)) %>%
+  unique()
+
+date.vec <- data.frame(date=seq.Date((min(all_jones_temps$date,na.rm=T)+1),max(all_jones_temps$date,na.rm=T)))
+
+daily_jones_temps_nonmissing <- all_jones_temps %>%
+  group_by(date,site,pop) %>%
+  summarize(n.temps = n(),
+            meanT = ifelse(n.temps>=6,mean(temp),NA),
+            .groups = "drop") %>%
+  select(-n.temps) %>%
+  pivot_wider(id_cols=c(date,site),names_from = pop,values_from = meanT) %>%
+  tail(.,-1) %>% # remove the first row of NAs
+  merge(date.vec,.,all=T) %>%
+  merge(.,jones_prism,by="date") %>%
+  merge(.,jones_snotel,by="date",all.x=T) %>% 
+  select(-c(pr_tmin,pr_tmax,snotel_tmax,snotel_tmin))
+
+daily_jones_temps_nonmissing %>% select(where(is.numeric)) %>%  cor(use = "pairwise.complete.obs") %>% corrplot::corrplot()   
+```
+
+## Predict jones
+```{r pred_Jones}
+
+pops <- c("SouthEast","SouthWest","NorthEast","NorthWest","TopEast","TopWest")
+
+daily_jones_temps_filled <- daily_jones_temps_nonmissing %>%
+  mutate(doy = yday(date),
+         year = year(date))
+plot_list <- list()
+
+for(pop in pops){
+  print(pop)
+
+  rows_na <- is.na(daily_jones_temps_filled[[pop]])
+  cols_keep <- colSums(is.na(daily_jones_temps_filled[rows_na, ])) == 0
+  cols_keep[pop] <- TRUE
+
+  lm.dats <- daily_jones_temps_filled[cols_keep]
+  lm.dats <- lm.dats %>%
+    mutate(doy = yday(date),
+           year = year(date)) %>%
+    select(-date,-site,-contains("ppt")) %>%
+    na.omit()
+
+  head(lm.dats)
+
+  pred_cols <- setdiff(names(lm.dats), c(pop, "doy"))
+
+  f <- as.formula(
+    paste(pop, "~", paste(pred_cols, collapse = " + "), "+ doy + I(doy^2)")
+  )
+
+  tmp.lm <- lm(formula = f, data = lm.dats, na.action = na.fail)
+
+  tmp.dredge <- dredge(tmp.lm,
+                       trace=2,
+                       m.lim = c(0,8),
+                       extra = list(R2 = function(x) summary(x)$r.squared,
+                                    adjR2 = function(x) summary(x)$adj.r.squared))
+
+  best.mod <- get.models(tmp.dredge,subset = 1)[[1]]
+
+  daily_jones_temps_filled[paste0(pop,"_pred")] <- predict(object = best.mod,newdata=daily_jones_temps_filled)
+
+  p_line = ggplot(daily_jones_temps_filled,aes(x=!!sym(pop),y=!!sym(paste0(pop,"_pred"))))+
+    geom_point()+
+    geom_abline(slope=1)+
+    theme_classic()+
+    labs(title=pop,x=pop,y=paste0(pop," predicted"))
+
+  p_ts = ggplot(daily_jones_temps_filled,aes(x=date))+
+    geom_point(aes(y=.data[[pop]],color="actual"),size=2)+
+    geom_point(aes(y=.data[[paste0(pop,"_pred")]],color="predicted"))+
+    theme_classic(base_size = 12)+
+    labs(title=pop,x="date",y="mean daily temp (C)")+
+    scale_color_manual(values=c("actual"="blue","predicted"="sienna1"))
+
+  p_hist = ggplot(daily_jones_temps_filled,aes(x=!!sym(pop)-!!sym(paste0(pop,"_pred"))))+
+    geom_histogram(fill="grey90",color="grey30",bins=50)+
+    geom_vline(xintercept = 0,color="red")+
+    theme_classic()+
+    labs(title=pop,x="actual-predicted")
+
+  p <- (p_line | p_hist) / p_ts
+
+  plot_list[[pop]] <- p
+
+}
+
+lapply(plot_list, print)
+```
+
+# =============
+# Replace NAs with predicted data
+# =============
+
+```{r replaceNAs}
+
+niwot_pops <- c("SouthLower","SouthUpper","NorthUpper","NorthLower","TopUpper","TopLower")
+guanella_pops <- c("SouthLower","SouthUpper","NorthUpper","NorthLower","TopUpper","TopLower")
+jones_pops    <- c("SouthEast","SouthWest","NorthEast","NorthWest","TopEast","TopWest")
+
+niwot_filled_final <- daily_niwot_temps_filled
+for(pop in niwot_pops){
+  niwot_filled_final[[pop]] <- coalesce(niwot_filled_final[[pop]], niwot_filled_final[[paste0(pop,"_pred")]])
+}
+niwot_filled_final <- niwot_filled_final %>% select(date, site, all_of(niwot_pops),contains("snotel_"))
+
+guanella_filled_final <- daily_guanella_temps_filled
+for(pop in guanella_pops){
+  guanella_filled_final[[pop]] <- coalesce(guanella_filled_final[[pop]], guanella_filled_final[[paste0(pop,"_pred")]])
+}
+guanella_filled_final <- guanella_filled_final %>% select(date, site, all_of(guanella_pops),contains("snotel_"))
+
+jones_filled_final <- daily_jones_temps_filled
+for(pop in jones_pops){
+  jones_filled_final[[pop]] <- coalesce(jones_filled_final[[pop]], jones_filled_final[[paste0(pop,"_pred")]])
+}
+jones_filled_final <- jones_filled_final %>% select(date, site, all_of(jones_pops),contains("snotel_"))
+
+write_csv(jones_filled_final,"data/climate/for_analyses/jones.csv")
+write_csv(guanella_filled_final,"data/climate/for_analyses/guanella.csv")
+write_csv(niwot_filled_final,"data/climate/for_analyses/niwot.csv")
+```
+
