@@ -23,6 +23,7 @@ library(starsExtra)
 library(exactextractr)
 library(spatialEco)
 library(MultiscaleDTM)
+library(corrplot)
 
 source("r/helper_functions.R")
 
@@ -160,7 +161,8 @@ for(pop in pops){
   # Population-level eastness/northness from full trend DEM
   points$pop_est <- as.numeric(global(trend_east, "mean", na.rm = TRUE))
   points$pop_nrt <- as.numeric(global(trend_north, "mean", na.rm = TRUE))
-
+  points$pop_slp <- as.numeric(global(trend_terrain$slope, "mean", na.rm = TRUE))
+  
   # Per-radius extraction
   for(rad in radii_m){
 
@@ -169,7 +171,7 @@ for(pop in pops){
 
     # Slope, aspect, eastness, northness from detailed DEM
     points[[paste0("slp_", sfx)]] <- exact_extract(micro_terrain[["slope"]], buf, fun = w_mean, progress = FALSE)
-    points[[paste0("asp_", sfx)]] <- exact_extract(micro_terrain[["aspect"]], buf, fun = w_circ_mean_deg, progress = FALSE)
+    # points[[paste0("asp_", sfx)]] <- exact_extract(micro_terrain[["aspect"]], buf, fun = w_circ_mean_deg, progress = FALSE)
     points[[paste0("est_", sfx)]] <- exact_extract(micro_east, buf, fun = w_mean, progress = FALSE)
     points[[paste0("nrt_", sfx)]] <- exact_extract(micro_north, buf, fun = w_mean, progress = FALSE)
 
@@ -202,71 +204,13 @@ for(pop in pops){
 }
 ```
 
-# ======================
-# Extract microtopography variables from 5cm aggregated DEM
-# ======================
-```{r extract_microtopo_5cm}
-
-for(pop in pops){
-
-  cat(pop, "\n")
-
-  points <- get(paste0(pop, "_plants"))
-  dem_terra <- get(paste0(pop, "_ras"))
-  dem_5cm <- aggregate(dem_terra, fact = 5, fun = "mean")
-
-  lat_dd <- pop_info$lat_dd[pop_info$pop == pop]
-
-  micro_terrain <- terra::terrain(dem_5cm, v = c("slope","aspect"), unit = "degrees")
-  micro_east <- sin(micro_terrain[["aspect"]] * pi/180)
-  micro_north <- cos(micro_terrain[["aspect"]] * pi/180)
-
-  hli_ras <- spatialEco::hli(dem_5cm)
-  pins_ras <- p_insol(dem_5cm, lat_dd)
-
-  buf_pt <- st_buffer(points, 0.01)
-
-  for(rad in radii_m[radii_m > 0.1]){
-
-    buf <- st_buffer(points, rad)
-    sfx <- rad * 100
-
-    points[[paste0("slp_", sfx, "_5")]] <- exact_extract(micro_terrain[["slope"]], buf, fun = w_mean, progress = FALSE)
-    points[[paste0("asp_", sfx, "_5")]] <- exact_extract(micro_terrain[["aspect"]], buf, fun = w_circ_mean_deg, progress = FALSE)
-    points[[paste0("est_", sfx, "_5")]] <- exact_extract(micro_east, buf, fun = w_mean, progress = FALSE)
-    points[[paste0("nrt_", sfx, "_5")]] <- exact_extract(micro_north, buf, fun = w_mean, progress = FALSE)
-
-    tpi_r <- spatialEco::tpi(dem_5cm, scale = rad, win = "circle")
-    points[[paste0("tpi_", sfx, "_5")]] <- exact_extract(tpi_r, buf_pt, fun = w_mean, progress = FALSE)
-
-    # TRI window in cells for 5cm DEM (rad / 0.05 cells per meter)
-    s_i <- as.integer(round((rad / 0.05) * 2 + 1))
-    tmp_tri <- terra::focal(dem_5cm, w = base::matrix(data = 1, nrow = s_i, ncol = s_i),
-                            fun = function(x) {
-                              center_idx <- length(x) %/% 2 + 1
-                              sqrt(sum((x - x[center_idx])^2, na.rm = TRUE) / sum(!is.na(x)))
-                            })
-    points[[paste0("tri_", sfx, "_5")]] <- exact_extract(tmp_tri, buf_pt, fun = w_mean, progress = FALSE)
-
-    win <- as.integer(round((rad / 0.05) * 2 + 1))
-    q <- MultiscaleDTM::Qfit(r = dem_5cm, w = c(win, win), metrics = c("profc","planc","maxc","meanc"))
-    points[[paste0("plcv_", sfx, "_5")]] <- exact_extract(q$planc, buf_pt, fun = w_mean, progress = FALSE)
-    points[[paste0("prcv_", sfx, "_5")]] <- exact_extract(q$profc, buf_pt, fun = w_mean, progress = FALSE)
-
-    points[[paste0("hli_", sfx, "_5")]] <- exact_extract(raster(hli_ras), buf, fun = w_mean, progress = FALSE)
-    points[[paste0("pins_", sfx, "_5")]] <- exact_extract(pins_ras, buf, fun = w_mean, progress = FALSE)
-  }
-
-  assign(paste0(pop, "_plants"), points, envir = .GlobalEnv)
-}
-```
 
 # ======================
 # Mesoscale topography from 1m 3DEP DEM (population-level)
 # ======================
 ```{r extract_mesotopo}
 
-meso_tpi_radii <- c(50, 200, 500)
+meso_tpi_radii <- c(10, 50, 500)
 
 for(pop in pops){
 
@@ -327,19 +271,39 @@ for(pop in pops){
 
 dir.create("data/output", showWarnings = FALSE)
 
-all_plants <- bind_rows(lapply(pops, function(p) get(paste0(p, "_plants"))))
+all_plants <- bind_rows(lapply(pops, function(p) get(paste0(p, "_plants"))))%>% 
+  st_zm(.)
 
 saveRDS(all_plants, "data/output/allPops_microtopo.rds")
-st_write(all_plants, "data/output/allPops_microtopo.shp", delete_dsn = TRUE)
-write_csv(as.data.frame(all_plants) %>% select(-geometry), "data/output/allPops_microtopo.csv")
+st_write(all_plants, "data/output/allPops_microtopo.shp")
+write_csv(as.data.frame(all_plants) %>% dplyr::select(-geometry), "data/output/allPops_microtopo.csv")
 
 cat("Saved", nrow(all_plants), "plants across", length(pops), "populations.\n")
 ```
+
+# ======================
+# Look at correlations in spatial data
+# ======================
+
+## Microtopo correlations
+```{r microtopo_corrs}
+# remove_cols <- c("tpi_50","tri_50","nrt_10","nrt_50","est_50","est_30","hli_50","pins_10","pins_50")
+microtopo_dats <- read_csv("data/output/allPops_microtopo.csv") %>% 
+  dplyr::select(starts_with("ms"),-plantID,-pop,-elv_pt) 
+
+corrplot(cor(microtopo_dats[,2:ncol(microtopo_dats)]) ,method = "number"
+         )
+
+
+
+```
+
 
 # #####################
 # Things below here 
 # have been done, 
 # saved or fixed
+# ----------------------------------
 ## ===========
 ## Detrend DEMs 
 ## with starsExtra 
@@ -404,3 +368,64 @@ for(pop in pops){
 
 ```
 
+# #####################
+# Scratch
+# ----------------------------------
+# ======================
+# Extract microtopography variables from 5cm aggregated DEM
+# ======================
+```{r extract_microtopo_5cm}
+
+# for(pop in pops){
+# 
+#   cat(pop, "\n")
+# 
+#   points <- get(paste0(pop, "_plants"))
+#   dem_terra <- get(paste0(pop, "_ras"))
+#   dem_5cm <- aggregate(dem_terra, fact = 5, fun = "mean")
+# 
+#   lat_dd <- pop_info$lat_dd[pop_info$pop == pop]
+# 
+#   micro_terrain <- terra::terrain(dem_5cm, v = c("slope","aspect"), unit = "degrees")
+#   micro_east <- sin(micro_terrain[["aspect"]] * pi/180)
+#   micro_north <- cos(micro_terrain[["aspect"]] * pi/180)
+# 
+#   hli_ras <- spatialEco::hli(dem_5cm)
+#   pins_ras <- p_insol(dem_5cm, lat_dd)
+# 
+#   buf_pt <- st_buffer(points, 0.01)
+# 
+#   for(rad in radii_m[radii_m > 0.1]){
+# 
+#     buf <- st_buffer(points, rad)
+#     sfx <- rad * 100
+# 
+#     points[[paste0("slp_", sfx, "_5")]] <- exact_extract(micro_terrain[["slope"]], buf, fun = w_mean, progress = FALSE)
+#     points[[paste0("asp_", sfx, "_5")]] <- exact_extract(micro_terrain[["aspect"]], buf, fun = w_circ_mean_deg, progress = FALSE)
+#     points[[paste0("est_", sfx, "_5")]] <- exact_extract(micro_east, buf, fun = w_mean, progress = FALSE)
+#     points[[paste0("nrt_", sfx, "_5")]] <- exact_extract(micro_north, buf, fun = w_mean, progress = FALSE)
+# 
+#     tpi_r <- spatialEco::tpi(dem_5cm, scale = rad, win = "circle")
+#     points[[paste0("tpi_", sfx, "_5")]] <- exact_extract(tpi_r, buf_pt, fun = w_mean, progress = FALSE)
+# 
+#     # TRI window in cells for 5cm DEM (rad / 0.05 cells per meter)
+#     s_i <- as.integer(round((rad / 0.05) * 2 + 1))
+#     tmp_tri <- terra::focal(dem_5cm, w = base::matrix(data = 1, nrow = s_i, ncol = s_i),
+#                             fun = function(x) {
+#                               center_idx <- length(x) %/% 2 + 1
+#                               sqrt(sum((x - x[center_idx])^2, na.rm = TRUE) / sum(!is.na(x)))
+#                             })
+#     points[[paste0("tri_", sfx, "_5")]] <- exact_extract(tmp_tri, buf_pt, fun = w_mean, progress = FALSE)
+# 
+#     win <- as.integer(round((rad / 0.05) * 2 + 1))
+#     q <- MultiscaleDTM::Qfit(r = dem_5cm, w = c(win, win), metrics = c("profc","planc","maxc","meanc"))
+#     points[[paste0("plcv_", sfx, "_5")]] <- exact_extract(q$planc, buf_pt, fun = w_mean, progress = FALSE)
+#     points[[paste0("prcv_", sfx, "_5")]] <- exact_extract(q$profc, buf_pt, fun = w_mean, progress = FALSE)
+# 
+#     points[[paste0("hli_", sfx, "_5")]] <- exact_extract(raster(hli_ras), buf, fun = w_mean, progress = FALSE)
+#     points[[paste0("pins_", sfx, "_5")]] <- exact_extract(pins_ras, buf, fun = w_mean, progress = FALSE)
+#   }
+# 
+#   assign(paste0(pop, "_plants"), points, envir = .GlobalEnv)
+# }
+```
