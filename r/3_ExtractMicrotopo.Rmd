@@ -204,7 +204,6 @@ for(pop in pops){
 }
 ```
 
-
 # ======================
 # Mesoscale topography from 1m 3DEP DEM (population-level)
 # ======================
@@ -285,19 +284,55 @@ cat("Saved", nrow(all_plants), "plants across", length(pops), "populations.\n")
 # Look at correlations in spatial data
 # ======================
 
-## Microtopo correlations
+## First pass selection of microtopo variables based on correlations
 ```{r microtopo_corrs}
-# remove_cols <- c("tpi_50","tri_50","nrt_10","nrt_50","est_50","est_30","hli_50","pins_10","pins_50")
+
 microtopo_dats <- read_csv("data/output/allPops_microtopo.csv") %>% 
-  dplyr::select(starts_with("ms"),-plantID,-pop,-elv_pt) 
+  dplyr::select(-plantID,-elv_pt) 
+  
+remove_cols <- c(
+  "slp_50",
+  "pop_slp",
+  "tri_50","tri_10",
+  "tpi_50","tpi_10",
+  "ms_tpi_500",
+  "hli_50","hli_10",
+  "slp_10","slp_50","slpT_30",
+  "pop_nrt","pop_est",
+  "nrt_10","nrt_50",
+  "ms_nrt_50","nrtT_30",
+  "est_10","est_50",
+  "pins_50","pins_30","pins_10",
+  "prcv_50",
+  "slpT_30"
+)
 
-corrplot(cor(microtopo_dats[,2:ncol(microtopo_dats)]) ,method = "number"
-         )
+corr_dats <- microtopo_dats %>% 
+  dplyr::select(-all_of(remove_cols)) %>% 
+  group_by(site) %>% 
+  group_modify(~ correlate(.x, quiet = TRUE) %>% stretch(na.rm = TRUE)) %>%
+  ungroup() %>% 
+  group_by(x,y) %>% 
+  summarise(min_r = min(abs(r), na.rm = TRUE), .groups = "drop") %>% arrange(-min_r)
+
+ggplot(corr_dats,aes(x, y, fill = r, label = round(r, 2))) +
+  geom_tile() +
+  geom_text(size = 2.5) +
+  scale_fill_gradient2(low = "blue", mid = "white", high = "red", midpoint = 0, limits = c(-1, 1)) +
+  facet_wrap(~site) +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1),
+        axis.title = element_blank())
+
+model_microtopo_dats <- microtopo_dats %>% 
+  dplyr::select(-all_of(remove_cols))
 
 
+model_microtopo_dats <- read_csv("data/output/allPops_microtopo.csv")%>% 
+  dplyr::select(-all_of(remove_cols))
 
+write_csv(model_microtopo_dats,"data/output/model_microtopo.csv")
 ```
-
 
 # #####################
 # Things below here 
