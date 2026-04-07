@@ -166,102 +166,42 @@ results %>%
 ```
 
 # --------------
-# Variable winnowing: VIF then dredge?
+# Variable winnowing: VIF then dredge
 # --------------
 
-```{r winnow_setup}
+```{r vr_global_models}
 clim_vars <- names(clim)[!names(clim) %in% c("site", "plot", "year")]
 mt_vars <- names(microtopo)[!names(microtopo) %in% c("site", "plot", "plantID")]
-```
 
-```{r cluster_setup}
-library(parallel)
-cl <- makeCluster(detectCores() - 1)
-clusterEvalQ(cl, {
-  library(lme4)
-  library(MuMIn)
-})
-```
-
-
-```{r surv_clim_dredge}
 surv_dat <- surv_mod %>%
-  mutate(across(all_of(c(mt_vars, clim_vars)), ~ as.numeric(scale(.))), year = factor(year)) %>% 
-  select(-log_size) %>% 
-  na.omit() %>% 
-  mutate(site.pop = paste(site,plot,sep = "."))
-
-surv_clim_formula <- as.formula(paste(c("surv ~ size_t0*(site + year + ", paste(clim_vars,collapse = " + "),") + (1|site.pop)"),collapse = " "))
-surv_clim_mod <- glmer(formula = surv_clim_formula,family = "binomial",data=surv_dat)
-clusterExport(cl, "surv_dat")
-dredge_surv_clim <- dredge(surv_clim_mod, cluster = cl, 
-                           fixed = c("size_t0", "year"), trace = 2,
-  subset = (ann_snow_days + win_meanT_mean + win_meanT_range + gs_snow_days + gs_meanT_mean + gs_meanT_range) <= 3 &
-           !(ann_snow_days & win_meanT_mean) &
-           !(ann_snow_days & gs_snow_days))
-
-surv_clim_best_mod <- get.models(surv_clim_dredge,subset=1)[[1]]
-surv_clim_vars <- setdiff(rownames(summary(surv_clim_best_mod)$coefficients),c("size_t0","year2024","year2025","(Intercept)"))
-```
-
-
-```{r growth_clim_dredge}
-growth_dat <- growth_mod %>%
-  mutate(across(all_of(c(mt_vars, clim_vars)), ~ as.numeric(scale(.))), 
-         year = factor(year)) %>% 
-  select(-log_size) %>% 
+  mutate(across(all_of(c(mt_vars, clim_vars)), ~ as.numeric(scale(.))), year = factor(year)) %>%
+  select(-log_size) %>%
   na.omit() %>%
-  mutate(site.pop = paste(site,plot,sep = "."))
+  mutate(site.pop = paste(site, plot, sep = "."))
 
-growth_clim_formula <- as.formula(paste(c("growth ~ year + size_t0 + ", paste(clim_vars,collapse = " + ")," + (1|site.pop)"),collapse = " "))
-growth_clim_mod <- lmer(formula = growth_clim_formula,data=growth_dat,REML=F)
-clusterExport(cl, "growth_dat")
-growth_clim_dredge <- dredge(growth_clim_mod, cluster = cl, fixed = c("size_t0", "year"), trace = 2,
-  subset = (ann_snow_days + win_meanT_mean + win_meanT_range + gs_snow_days + gs_meanT_mean + gs_meanT_range) <= 3 &
-           !(ann_snow_days & win_meanT_mean) &
-           !(ann_snow_days & gs_snow_days))
-growth_clim_best_mod <- get.models(growth_clim_dredge,subset=1)[[1]]
-growth_clim_vars <- setdiff(rownames(summary(growth_clim_best_mod)$coefficients),c("size_t0","year2024","year2025","(Intercept)"))
+surv_clim_formula <- as.formula(paste(c("surv ~ size_t0*(site + year + ", paste(clim_vars, collapse = " + "), ") + (1|site.pop)"), collapse = " "))
+surv_clim_mod <- glmer(formula = surv_clim_formula, family = "binomial", data = surv_dat)
+vif(surv_clim_mod)
+summary(surv_clim_mod)
 
-## Variance in growth
-growth_var_dat <- growth_dat %>% 
-  mutate(growth_resid.sq = residuals(growth_clim_best_mod)^2)
-growth_var_clim_formula <- as.formula(paste(c("growth_resid.sq ~ year + size_t0 + site ", paste(clim_vars,collapse = " + ")," + (1|site.pop)"),collapse = " "))
+growth_dat <- growth_mod %>%
+  mutate(across(all_of(c(mt_vars, clim_vars)), ~ as.numeric(scale(.))), year = factor(year)) %>%
+  select(-log_size) %>%
+  na.omit() %>%
+  mutate(site.pop = paste(site, plot, sep = "."))
 
-growth_var_clim_mod <- lmer(growth_var_clim_formula,
-                            data = growth_var_dat,
-                            REML=FALSE,
-                            na.action = na.fail)
-clusterExport(cl, "growth_var_dat")
-growth_var_clim_dredge <- dredge(growth_var_clim_mod, cluster = cl, fixed = c("size_t0", "year"), trace = 2,
-  subset = (ann_snow_days + win_meanT_mean + win_meanT_range + gs_snow_days + gs_meanT_mean + gs_meanT_range) <= 3 &
-           !(ann_snow_days & win_meanT_mean) &
-           !(ann_snow_days & gs_snow_days))
-growth_var_best_mod <- get.models(growth_var_clim_dredge,subset=1)[[1]]
-growth_var_clim_vars <- setdiff(rownames(summary(growth_var_best_mod)$coefficients),c("size_t0","year2024","year2025","(Intercept)"))
+growth_clim_formula <- as.formula(paste(c("growth ~ year + size_t0 + ", paste(clim_vars, collapse = " + "), " + (1|site.pop)"), collapse = " "))
+growth_clim_mod <- lmer(formula = growth_clim_formula, data = growth_dat, REML = F)
 
-```
+repro_dat <- repro_mod %>%
+  mutate(across(all_of(c(mt_vars, clim_vars)), ~ as.numeric(scale(.))), year = factor(year)) %>%
+  select(-log_size) %>%
+  na.omit() %>%
+  mutate(site.pop = paste(site, plot, sep = "."))
 
-```{r p_repro}
-repro_dat  <- repro_mod %>%
-  mutate(across(all_of(c(mt_vars, clim_vars)), ~ as.numeric(scale(.))), year = factor(year)) %>% 
-  select(-log_size) %>% 
-  na.omit() %>% 
-  mutate(site.pop = paste(site,plot,sep = "."))
+repro_clim_formula <- as.formula(paste(c("flowered ~ year + size_t0 + ", paste(clim_vars, collapse = " + "), " + (1|site.pop)"), collapse = " "))
+repro_clim_mod <- glmer(repro_clim_formula, data = repro_dat, family = binomial)
 
-repro_clim_formula <- as.formula(paste(c("flowered ~ year + size_t0 + ", paste(clim_vars,collapse = " + ")," + (1|site.pop)"),collapse = " "))
-repro_clim_mod <- glmer(repro_clim_formula, data = repro_dat, family = binomial) 
-clusterExport(cl, "repro_dat")
-repro_clim_dredge <- dredge(repro_clim_mod, cluster = cl, fixed = c("size_t0", "year"), trace = 2,
-  subset = (ann_snow_days + win_meanT_mean + win_meanT_range + gs_snow_days + gs_meanT_mean + gs_meanT_range) <= 3 &
-           !(ann_snow_days & win_meanT_mean) &
-           !(ann_snow_days & gs_snow_days))
-repro_clim_best_mod <- get.models(repro_clim_dredge, subset = 1)[[1]]
-repro_clim_vars <- setdiff(rownames(summary(repro_clim_best_mod)$coefficients), c("size_t0", "year2024", "year2025", "(Intercept)"))
-```
-
-
-```{r nflrs_clim_dredge}
 nflrs_dat <- repro_mod %>% filter(flowered == 1) %>%
   mutate(across(all_of(c(mt_vars, clim_vars)), ~ as.numeric(scale(.))), year = factor(year)) %>%
   select(-log_size) %>%
@@ -270,15 +210,71 @@ nflrs_dat <- repro_mod %>% filter(flowered == 1) %>%
 
 nflrs_clim_formula <- as.formula(paste(c("total_flrs ~ year + size_t0 + ", paste(clim_vars, collapse = " + "), " + (1|site.pop)"), collapse = " "))
 nflrs_clim_mod <- glmer(nflrs_clim_formula, data = nflrs_dat, family = poisson)
-clusterExport(cl, "nflrs_dat")
-nflrs_clim_dredge <- dredge(nflrs_clim_mod, cluster = cl, fixed = c("size_t0", "year"), trace = 2,
+```
+
+```{r clim_dredge}
+library(parallel)
+clusterType <- if (length(find.package("snow", quiet = TRUE))) "SOCK" else "PSOCK"
+cl <- makeCluster(detectCores() - 1, type = clusterType)
+clusterEvalQ(cl, { library(lme4); library(MuMIn) })
+
+clusterExport(cl, "surv_dat", envir = environment())
+dredge_surv_clim <- dredge(surv_clim_mod, cluster = cl, fixed = c("size_t0", "year"), trace = 2,
   subset = (ann_snow_days + win_meanT_mean + win_meanT_range + gs_snow_days + gs_meanT_mean + gs_meanT_range) <= 3 &
            !(ann_snow_days & win_meanT_mean) &
            !(ann_snow_days & gs_snow_days))
-nflrs_clim_best_mod <- get.models(nflrs_clim_dredge, subset = 1)[[1]]
+
+clusterExport(cl, "growth_dat", envir = environment())
+dredge_growth_clim <- dredge(growth_clim_mod, cluster = cl, fixed = c("size_t0", "year"), trace = 2,
+  subset = (ann_snow_days + win_meanT_mean + win_meanT_range + gs_snow_days + gs_meanT_mean + gs_meanT_range) <= 3 &
+           !(ann_snow_days & win_meanT_mean) &
+           !(ann_snow_days & gs_snow_days))
+
+clusterExport(cl, "repro_dat", envir = environment())
+dredge_repro_clim <- dredge(repro_clim_mod, cluster = cl, fixed = c("size_t0", "year"), trace = 2,
+  subset = (ann_snow_days + win_meanT_mean + win_meanT_range + gs_snow_days + gs_meanT_mean + gs_meanT_range) <= 3 &
+           !(ann_snow_days & win_meanT_mean) &
+           !(ann_snow_days & gs_snow_days))
+
+clusterExport(cl, "nflrs_dat", envir = environment())
+dredge_nflrs_clim <- dredge(nflrs_clim_mod, cluster = cl, fixed = c("size_t0", "year"), trace = 2,
+  subset = (ann_snow_days + win_meanT_mean + win_meanT_range + gs_snow_days + gs_meanT_mean + gs_meanT_range) <= 3 &
+           !(ann_snow_days & win_meanT_mean) &
+           !(ann_snow_days & gs_snow_days))
+
+stopCluster(cl)
+```
+
+```{r clim_model_selection}
+surv_clim_best_mod <- get.models(dredge_surv_clim, subset = )[[1]]
+surv_clim_vars <- setdiff(rownames(summary(surv_clim_best_mod)$coefficients), c("size_t0", "year2024", "year2025", "(Intercept)"))
+
+growth_clim_best_mod <- get.models(dredge_growth_clim, subset = )[[1]]
+growth_clim_vars <- setdiff(rownames(summary(growth_clim_best_mod)$coefficients), c("size_t0", "year2024", "year2025", "(Intercept)"))
+
+repro_clim_best_mod <- get.models(dredge_repro_clim, subset = )[[1]]
+repro_clim_vars <- setdiff(rownames(summary(repro_clim_best_mod)$coefficients), c("size_t0", "year2024", "year2025", "(Intercept)"))
+
+nflrs_clim_best_mod <- get.models(dredge_nflrs_clim, subset = )[[1]]
 nflrs_clim_vars <- setdiff(rownames(summary(nflrs_clim_best_mod)$coefficients), c("size_t0", "year2024", "year2025", "(Intercept)"))
 ```
 
-```{r cluster_stop}
+```{r growth_var_clim_dredge}
+growth_var_dat <- growth_dat %>%
+  mutate(growth_resid.sq = residuals(growth_clim_best_mod)^2)
+growth_var_clim_formula <- as.formula(paste(c("growth_resid.sq ~ year + size_t0 + site ", paste(clim_vars, collapse = " + "), " + (1|site.pop)"), collapse = " "))
+growth_var_clim_mod <- lmer(growth_var_clim_formula, data = growth_var_dat, REML = FALSE, na.action = na.fail)
+
+clusterType <- if (length(find.package("snow", quiet = TRUE))) "SOCK" else "PSOCK"
+cl <- makeCluster(detectCores() - 1, type = clusterType)
+clusterEvalQ(cl, { library(lme4); library(MuMIn) })
+clusterExport(cl, "growth_var_dat", envir = environment())
+dredge_growth_var_clim <- dredge(growth_var_clim_mod, cluster = cl, fixed = c("size_t0", "year"), trace = 2,
+  subset = (ann_snow_days + win_meanT_mean + win_meanT_range + gs_snow_days + gs_meanT_mean + gs_meanT_range) <= 3 &
+           !(ann_snow_days & win_meanT_mean) &
+           !(ann_snow_days & gs_snow_days))
 stopCluster(cl)
+
+growth_var_best_mod <- get.models(dredge_growth_var_clim, subset = )[[1]]
+growth_var_clim_vars <- setdiff(rownames(summary(growth_var_best_mod)$coefficients), c("size_t0", "year2024", "year2025", "(Intercept)"))
 ```
