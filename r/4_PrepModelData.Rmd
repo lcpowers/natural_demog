@@ -137,7 +137,7 @@ nflrs_clim_mod <- glmer(nflrs_clim_formula, data = nflrs_dat, family = poisson)
 ```{r clim_dredge}
 # Note: must not name the cluster 'cl' — MuMIn uses cl <- match.call() internally,
 # which causes a name collision that silently breaks parallel dispatch.
-clust <- makeCluster(8, type = "FORK")
+clust <- makeCluster(32, type = "FORK")
 
 dredge_surv_clim <- dredge(surv_clim_mod, cluster = clust, fixed = c("size_t0", "year"), trace = 2,
   subset = (ann_snow_days + win_meanT_mean + win_meanT_range + gs_snow_days + gs_meanT_mean + gs_meanT_range) <= 3 &
@@ -163,23 +163,23 @@ stopCluster(clust)
 ```
 
 ```{r clim_model_selection}
-surv_clim_best_mod <- get.models(dredge_surv_clim, subset = )[[1]]
+surv_clim_best_mod <- get.models(dredge_surv_clim, subset = 1)[[1]]
 surv_clim_vars <- setdiff(rownames(summary(surv_clim_best_mod)$coefficients), c("size_t0", "year2024", "year2025", "(Intercept)"))
 
-growth_clim_best_mod <- get.models(dredge_growth_clim, subset = )[[1]]
+growth_clim_best_mod <- get.models(dredge_growth_clim, subset = 1)[[1]]
 growth_clim_vars <- setdiff(rownames(summary(growth_clim_best_mod)$coefficients), c("size_t0", "year2024", "year2025", "(Intercept)"))
 
-repro_clim_best_mod <- get.models(dredge_repro_clim, subset = )[[1]]
+repro_clim_best_mod <- get.models(dredge_repro_clim, subset = 2)[[1]]
 repro_clim_vars <- setdiff(rownames(summary(repro_clim_best_mod)$coefficients), c("size_t0", "year2024", "year2025", "(Intercept)"))
 
-nflrs_clim_best_mod <- get.models(dredge_nflrs_clim, subset = )[[1]]
+nflrs_clim_best_mod <- get.models(dredge_nflrs_clim, subset = 2)[[1]]
 nflrs_clim_vars <- setdiff(rownames(summary(nflrs_clim_best_mod)$coefficients), c("size_t0", "year2024", "year2025", "(Intercept)"))
 ```
 
 ```{r growth_var_clim_dredge}
 growth_var_dat <- growth_dat %>%
   mutate(growth_resid.sq = residuals(growth_clim_best_mod)^2)
-growth_var_clim_formula <- as.formula(paste(c("growth_resid.sq ~ year + size_t0 + site ", paste(clim_vars, collapse = " + "), " + (1|site.pop)"), collapse = " "))
+growth_var_clim_formula <- as.formula(paste(c("growth_resid.sq ~ size_t0*(year + site +", paste(clim_vars, collapse = " + "), ") + (1|site.pop)"), collapse = " "))
 growth_var_clim_mod <- lmer(growth_var_clim_formula, data = growth_var_dat, REML = FALSE, na.action = na.fail)
 
 clust <- makeCluster(32, type = "FORK")
@@ -189,6 +189,20 @@ dredge_growth_var_clim <- dredge(growth_var_clim_mod, cluster = clust, fixed = c
            !(ann_snow_days & gs_snow_days))
 stopCluster(clust)
 
-growth_var_best_mod <- get.models(dredge_growth_var_clim, subset = )[[1]]
+growth_var_best_mod <- get.models(dredge_growth_var_clim, subset = 1)[[1]]
 growth_var_clim_vars <- setdiff(rownames(summary(growth_var_best_mod)$coefficients), c("size_t0", "year2024", "year2025", "(Intercept)"))
 ```
+
+# save best clim models
+```{r save_clim_models}
+
+clim_mods <- list(surv_clim_best_mod = surv_clim_best_mod,
+                  growth_clim_best_mod = growth_clim_best_mod,
+                  repro_clim_best_mod = repro_clim_best_mod,
+                  nflrs_clim_best_mod = nflrs_clim_best_mod,
+                  growth_var_best_mod = growth_clim_best_mod)
+
+saveRDS(clim_mods,"modelFitResults/best_clim_mods.rds")
+
+```
+
