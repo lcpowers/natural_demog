@@ -14,16 +14,16 @@ library(tidyverse)
 library(lme4)
 library(MuMIn)
 library(car)
+library(parallel)
 
 options(na.action = "na.fail")
 ```
 
 # --------------
-# Lookup table: standardize naming to demog conventions
-# site -> GP/NR/JP, plot -> N-lower etc.
-# --------------
+# load and merge data
 
-```{r lookup}
+
+```{r load_data}
 
 plot_names_lookup <- data.frame(
   site  = c(rep("GP",6), rep("NR",6), rep("JP",6)),
@@ -40,13 +40,6 @@ plot_names_lookup <- data.frame(
                "EastNorth","WestNorth","EastSouth","WestSouth","EastTop","WestTop")
 )
 
-```
-
-# --------------
-# Load data
-# --------------
-
-```{r load}
 
 demog <- readRDS("data/demog/vr_modData/mod_demog_data.rds")
 
@@ -67,14 +60,6 @@ clim <- read_csv("data/climate/for_analyses/clim_summary.csv") %>%
             by = c("site" = "site_clim", "pop" = "pop_clim")) %>%
   select(-c(site, pop)) %>%
   rename(site = site_demog)
-
-```
-
-# --------------
-# Join
-# --------------
-
-```{r join}
 
 surv_mod <- demog$surv %>%
   rename(plantID = id) %>% 
@@ -101,73 +86,9 @@ saveRDS(mod_data, "data/demog/vr_modData/mod_data.rds")
 
 ```
 
-# --------------
-# Univariate variable exploration
-# pseudo-R2 (McFadden) for binomial vrs, R2 for growth
-# --------------
-
-```{r var_explore}
-
-clim_vars <- names(clim)[!names(clim) %in% c("site", "plot", "year")]
-mt_vars <- names(microtopo)[!names(microtopo) %in% c("site", "plot", plantID)]
-
-vr_list <- list(
-  surv     = list(data = surv_mod, response = "surv", family = "binomial"),
-  growth   = list(data = growth_mod, response = "growth", family = "gaussian"),
-  flowered = list(data = repro_mod, response = "flowered", family = "binomial"),
-  n_flrs   = list(data = repro_mod %>% filter(flowered == 1),   response = "total_flrs", family = "poisson")
-)
-
-results <- data.frame()
-
-for (v in c(clim_vars, mt_vars)) {
-  var_type <- ifelse(v %in% clim_vars, "climate", "microtopo")
-  for (vr_name in names(vr_list)) {
-    vr   <- vr_list[[vr_name]]
-    dat  <- vr$data[, c(vr$response, v)] %>% drop_na()
-    if (nrow(dat) < 10 || var(dat[[v]], na.rm = TRUE) == 0) next
-    fml  <- as.formula(paste(vr$response, "~", v))
-    r2   <- tryCatch({
-      if (vr$family == "gaussian") {
-        summary(lm(fml, data = dat))$r.squared
-      } else {
-        m <- glm(fml, data = dat, family = vr$family)
-        1 - m$deviance / m$null.deviance
-      }
-    }, error = function(e) NA_real_)
-    results <- rbind(results, data.frame(vr = vr_name, var = v, type = var_type, r2 = r2))
-  }
-}
-
-```
-
-```{r var_explore_plot, fig.width = 9, fig.height = 6}
-
-results %>%
-  filter(!is.na(r2), type == "climate") %>%
-  mutate(var = reorder(var, r2, FUN = mean)) %>%
-  ggplot(aes(x = r2, y = var)) +
-  geom_point(size = 2.5, color = "#E07B64") +
-  facet_wrap(~vr, scales = "free_x") +
-  labs(x = "R² / pseudo-R²", y = NULL,
-       title = "Climate variables — univariate variance explained") +
-  theme_bw()
-
-results %>%
-  filter(!is.na(r2), type == "microtopo") %>%
-  mutate(var = reorder(var, r2, FUN = mean)) %>%
-  ggplot(aes(x = r2, y = var)) +
-  geom_point(size = 2.5, color = "#5BADA8") +
-  facet_wrap(~vr, scales = "free_x") +
-  labs(x = "R² / pseudo-R²", y = NULL,
-       title = "Microtopo variables — univariate variance explained") +
-  theme_bw()
-
-```
 
 # --------------
-# Variable winnowing: VIF then dredge
-# --------------
+# Fit and dredge global models
 
 ```{r vr_global_models}
 clim_vars <- names(clim)[!names(clim) %in% c("site", "plot", "year")]
@@ -213,7 +134,6 @@ nflrs_clim_mod <- glmer(nflrs_clim_formula, data = nflrs_dat, family = poisson)
 ```
 
 ```{r clim_dredge}
-library(parallel)
 cl <- makeCluster(32, type = "FORK")
 
 dredge_surv_clim <- dredge(surv_clim_mod, cluster = cl, fixed = c("size_t0", "year"), trace = 2,
