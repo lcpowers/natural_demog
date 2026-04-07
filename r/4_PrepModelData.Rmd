@@ -214,29 +214,23 @@ nflrs_clim_mod <- glmer(nflrs_clim_formula, data = nflrs_dat, family = poisson)
 
 ```{r clim_dredge}
 library(parallel)
-clusterType <- if (length(find.package("snow", quiet = TRUE))) "SOCK" else "PSOCK"
-cl <- makeCluster(detectCores() - 1, type = clusterType)
-clusterEvalQ(cl, { library(lme4); library(MuMIn) })
+cl <- makeCluster(32, type = "FORK")
 
-clusterExport(cl, "surv_dat", envir = environment())
 dredge_surv_clim <- dredge(surv_clim_mod, cluster = cl, fixed = c("size_t0", "year"), trace = 2,
   subset = (ann_snow_days + win_meanT_mean + win_meanT_range + gs_snow_days + gs_meanT_mean + gs_meanT_range) <= 3 &
            !(ann_snow_days & win_meanT_mean) &
            !(ann_snow_days & gs_snow_days))
 
-clusterExport(cl, "growth_dat", envir = environment())
 dredge_growth_clim <- dredge(growth_clim_mod, cluster = cl, fixed = c("size_t0", "year"), trace = 2,
   subset = (ann_snow_days + win_meanT_mean + win_meanT_range + gs_snow_days + gs_meanT_mean + gs_meanT_range) <= 3 &
            !(ann_snow_days & win_meanT_mean) &
            !(ann_snow_days & gs_snow_days))
 
-clusterExport(cl, "repro_dat", envir = environment())
 dredge_repro_clim <- dredge(repro_clim_mod, cluster = cl, fixed = c("size_t0", "year"), trace = 2,
   subset = (ann_snow_days + win_meanT_mean + win_meanT_range + gs_snow_days + gs_meanT_mean + gs_meanT_range) <= 3 &
            !(ann_snow_days & win_meanT_mean) &
            !(ann_snow_days & gs_snow_days))
 
-clusterExport(cl, "nflrs_dat", envir = environment())
 dredge_nflrs_clim <- dredge(nflrs_clim_mod, cluster = cl, fixed = c("size_t0", "year"), trace = 2,
   subset = (ann_snow_days + win_meanT_mean + win_meanT_range + gs_snow_days + gs_meanT_mean + gs_meanT_range) <= 3 &
            !(ann_snow_days & win_meanT_mean) &
@@ -265,10 +259,7 @@ growth_var_dat <- growth_dat %>%
 growth_var_clim_formula <- as.formula(paste(c("growth_resid.sq ~ year + size_t0 + site ", paste(clim_vars, collapse = " + "), " + (1|site.pop)"), collapse = " "))
 growth_var_clim_mod <- lmer(growth_var_clim_formula, data = growth_var_dat, REML = FALSE, na.action = na.fail)
 
-clusterType <- if (length(find.package("snow", quiet = TRUE))) "SOCK" else "PSOCK"
-cl <- makeCluster(detectCores() - 1, type = clusterType)
-clusterEvalQ(cl, { library(lme4); library(MuMIn) })
-clusterExport(cl, "growth_var_dat", envir = environment())
+cl <- makeCluster(32, type = "FORK")
 dredge_growth_var_clim <- dredge(growth_var_clim_mod, cluster = cl, fixed = c("size_t0", "year"), trace = 2,
   subset = (ann_snow_days + win_meanT_mean + win_meanT_range + gs_snow_days + gs_meanT_mean + gs_meanT_range) <= 3 &
            !(ann_snow_days & win_meanT_mean) &
