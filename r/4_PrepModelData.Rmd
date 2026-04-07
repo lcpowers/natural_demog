@@ -50,11 +50,17 @@ plot_names_lookup <- data.frame(
 
 demog <- readRDS("data/demog/vr_modData/mod_demog_data.rds")
 
+pop_elev <- read_csv("data/pop_info.csv") %>%
+  mutate(site = sub("_.*", "", pop), pop_mt = sub("^[^_]+_", "", pop)) %>%
+  left_join(plot_names_lookup %>% select(site, plot, pop_mt), by = c("site", "pop_mt")) %>%
+  select(site, plot, pop_elev = elev)
+
 microtopo <- read_csv("data/output/model_microtopo.csv") %>%
   left_join(plot_names_lookup %>% select(site_demog = site, plot, site_mt, pop_mt),
             by = c("site" = "site_mt", "pop" = "pop_mt")) %>%
   select(-c(site, pop)) %>%
-  rename(site = site_demog)
+  rename(site = site_demog) %>%
+  left_join(pop_elev, by = c("site", "plot"))
 
 clim <- read_csv("data/climate/for_analyses/clim_summary.csv") %>%
   left_join(plot_names_lookup %>% select(site_demog = site, plot, site_clim, pop_clim),
