@@ -135,29 +135,31 @@ nflrs_clim_mod <- glmer(nflrs_clim_formula, data = nflrs_dat, family = poisson)
 ```
 
 ```{r clim_dredge}
-cl <- makeCluster(32, type = "FORK")
+# Note: must not name the cluster 'cl' — MuMIn uses cl <- match.call() internally,
+# which causes a name collision that silently breaks parallel dispatch.
+clust <- makeCluster(8, type = "FORK")
 
-dredge_surv_clim <- dredge(surv_clim_mod, cluster = cl, fixed = c("size_t0", "year"), trace = 2,
+dredge_surv_clim <- dredge(surv_clim_mod, cluster = clust, fixed = c("size_t0", "year"), trace = 2,
   subset = (ann_snow_days + win_meanT_mean + win_meanT_range + gs_snow_days + gs_meanT_mean + gs_meanT_range) <= 3 &
            !(ann_snow_days & win_meanT_mean) &
            !(ann_snow_days & gs_snow_days))
 
-dredge_growth_clim <- dredge(growth_clim_mod, cluster = cl, fixed = c("size_t0", "year"), trace = 2,
+dredge_growth_clim <- dredge(growth_clim_mod, cluster = clust, fixed = c("size_t0", "year"), trace = 2,
   subset = (ann_snow_days + win_meanT_mean + win_meanT_range + gs_snow_days + gs_meanT_mean + gs_meanT_range) <= 3 &
            !(ann_snow_days & win_meanT_mean) &
            !(ann_snow_days & gs_snow_days))
 
-dredge_repro_clim <- dredge(repro_clim_mod, cluster = cl, fixed = c("size_t0", "year"), trace = 2,
+dredge_repro_clim <- dredge(repro_clim_mod, cluster = clust, fixed = c("size_t0", "year"), trace = 2,
   subset = (ann_snow_days + win_meanT_mean + win_meanT_range + gs_snow_days + gs_meanT_mean + gs_meanT_range) <= 3 &
            !(ann_snow_days & win_meanT_mean) &
            !(ann_snow_days & gs_snow_days))
 
-dredge_nflrs_clim <- dredge(nflrs_clim_mod, cluster = cl, fixed = c("size_t0", "year"), trace = 2,
+dredge_nflrs_clim <- dredge(nflrs_clim_mod, cluster = clust, fixed = c("size_t0", "year"), trace = 2,
   subset = (ann_snow_days + win_meanT_mean + win_meanT_range + gs_snow_days + gs_meanT_mean + gs_meanT_range) <= 3 &
            !(ann_snow_days & win_meanT_mean) &
            !(ann_snow_days & gs_snow_days))
 
-stopCluster(cl)
+stopCluster(clust)
 ```
 
 ```{r clim_model_selection}
@@ -180,12 +182,12 @@ growth_var_dat <- growth_dat %>%
 growth_var_clim_formula <- as.formula(paste(c("growth_resid.sq ~ year + size_t0 + site ", paste(clim_vars, collapse = " + "), " + (1|site.pop)"), collapse = " "))
 growth_var_clim_mod <- lmer(growth_var_clim_formula, data = growth_var_dat, REML = FALSE, na.action = na.fail)
 
-cl <- makeCluster(32, type = "FORK")
-dredge_growth_var_clim <- dredge(growth_var_clim_mod, cluster = cl, fixed = c("size_t0", "year"), trace = 2,
+clust <- makeCluster(32, type = "FORK")
+dredge_growth_var_clim <- dredge(growth_var_clim_mod, cluster = clust, fixed = c("size_t0", "year"), trace = 2,
   subset = (ann_snow_days + win_meanT_mean + win_meanT_range + gs_snow_days + gs_meanT_mean + gs_meanT_range) <= 3 &
            !(ann_snow_days & win_meanT_mean) &
            !(ann_snow_days & gs_snow_days))
-stopCluster(cl)
+stopCluster(clust)
 
 growth_var_best_mod <- get.models(dredge_growth_var_clim, subset = )[[1]]
 growth_var_clim_vars <- setdiff(rownames(summary(growth_var_best_mod)$coefficients), c("size_t0", "year2024", "year2025", "(Intercept)"))
