@@ -50,22 +50,22 @@ nflrs_clim_mod <- glmer(nflrs_clim_formula, data = nflrs_mod_data_scaled, family
 # which causes a name collision that silently breaks parallel dispatch.
 clust <- makeCluster(32, type = "FORK")
 
-dredge_surv_clim <- dredge(surv_clim_mod, cluster = clust, fixed = c("size_t0", "year"), trace = 2,
+dredge_surv_clim <- dredge(surv_clim_mod, cluster = clust, fixed = c("log_size_t0"), trace = 2,
   subset = (ann_snow_days + win_meanT_mean + win_meanT_range + gs_snow_days + gs_meanT_mean + gs_meanT_range) <= 3 &
            !(ann_snow_days & win_meanT_mean) &
            !(ann_snow_days & gs_snow_days))
 
-dredge_growth_clim <- dredge(growth_clim_mod, cluster = clust, fixed = c("size_t0", "year"), trace = 2,
+dredge_growth_clim <- dredge(growth_clim_mod, cluster = clust, fixed = c("log_size_t0"), trace = 2,
   subset = (ann_snow_days + win_meanT_mean + win_meanT_range + gs_snow_days + gs_meanT_mean + gs_meanT_range) <= 3 &
            !(ann_snow_days & win_meanT_mean) &
            !(ann_snow_days & gs_snow_days))
 
-dredge_repro_clim <- dredge(repro_clim_mod, cluster = clust, fixed = c("size_t0", "year"), trace = 2,
+dredge_repro_clim <- dredge(repro_clim_mod, cluster = clust, fixed = c("log_size_t0"), trace = 2,
   subset = (ann_snow_days + win_meanT_mean + win_meanT_range + gs_snow_days + gs_meanT_mean + gs_meanT_range) <= 3 &
            !(ann_snow_days & win_meanT_mean) &
            !(ann_snow_days & gs_snow_days))
 
-dredge_nflrs_clim <- dredge(nflrs_clim_mod, cluster = clust, fixed = c("size_t0", "year"), trace = 2,
+dredge_nflrs_clim <- dredge(nflrs_clim_mod, cluster = clust, fixed = c("log_size_t0"), trace = 2,
   subset = (ann_snow_days + win_meanT_mean + win_meanT_range + gs_snow_days + gs_meanT_mean + gs_meanT_range) <= 3 &
            !(ann_snow_days & win_meanT_mean) &
            !(ann_snow_days & gs_snow_days))
