@@ -63,6 +63,7 @@ for(i in 1:nrow(pop_info)){
 # pop_info <- read_csv("data/pop_info.csv")
 pop_info_sf <- st_as_sf(pop_info, coords = c("easting","northing"), crs = projCRS)
 pop_info$lat_dd <- st_coordinates(st_transform(pop_info_sf, 4326))[,2]
+# write_csv(pop_info,"data/pop_info.csv")
 rm(pop_info_sf)
 ```
 
@@ -294,6 +295,45 @@ all_plants_df <- as.data.frame(all_plants) %>%
 write_csv(all_plants_df, "data/output/allPops_microtopo_25cm.csv")
 
 cat("Saved", nrow(all_plants), "plants across", length(pops), "populations.\n")
+```
+
+# ======================
+# Population-level aspect and slope from trend DEM
+# ======================
+```{r pop_aspect}
+# pop_info$pop_slp <- NA
+# pop_info$pop_asp <- NA
+# pop_info$pop_est <- NA
+# pop_info$pop_nrt <- NA
+# pops <- pop_info$pop
+# for(pop in pops){
+#   site <- ifelse(str_detect(pop,"JP"),"Jones",
+#                  ifelse(str_detect(pop,"GP"),"Guanella","Niwot"))
+# 
+#   dem_trend <- rast(file.path("data/dems", site, paste0(pop, "_trend.tif")))
+#   trend_terrain <- terra::terrain(dem_trend, v = c("slope","aspect"), unit = "degrees")
+# 
+#   pop_info$pop_slp[pop_info$pop == pop] <- as.numeric(global(trend_terrain[["slope"]], "mean", na.rm = TRUE))
+#   pop_info$pop_est[pop_info$pop == pop] <- as.numeric(global(sin(trend_terrain[["aspect"]] * pi/180), "mean", na.rm = TRUE))
+#   pop_info$pop_nrt[pop_info$pop == pop] <- as.numeric(global(cos(trend_terrain[["aspect"]] * pi/180), "mean", na.rm = TRUE))
+# }
+# 
+# # Back-convert mean eastness/northness to aspect degrees (handles circularity correctly)
+# pop_info$pop_asp <- (atan2(pop_info$pop_est, pop_info$pop_nrt) * 180/pi) %% 360
+# 
+# pop_info$aspect_cat <- case_when(
+#   str_detect(pop_info$pop, "North") ~ "north",
+#   str_detect(pop_info$pop, "South") ~ "south",
+#   str_detect(pop_info$pop, "Top")   ~ "top"                                                                                                                
+#   )
+# 
+# write_csv(as.data.frame(pop_info) %>% dplyr::select(-geometry), "data/pop_info_slopeAspect.csv")
+# 
+# ggplot(pop_info,aes(x=aspect_cat,y=pop_slp))+
+#   geom_point(aes(color=pop))+
+#   facet_wrap(~site)+
+#   geom_label(aes(label=pop))
+
 ```
 
 # ======================

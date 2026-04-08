@@ -24,53 +24,53 @@ clim_vars <- names(clim)[!names(clim) %in% c("site", "pop", "year")]
 
 microtopo <- read_csv("data/output/model_microtopo_25cm.csv")
 mt_vars <- names(microtopo)[!names(microtopo) %in% c("site", "pop", "plantID","elv_pt")]
-
+mt_vars <- c(mt_vars,"aspect.cat")
 ```
 
 # --------------
 # Fit and dredge global models
 
 ```{r vr_global_models}
-# surv_clim_formula <- as.formula(paste(c("surv ~ log_size_t0*(year + site + ", paste(clim_vars, collapse = " + "), ") + (1|site.pop)"), collapse = " "))
-# surv_clim_mod <- glmer(formula = surv_clim_formula, family = "binomial", data = surv_mod_data_scaled)
-# summary(surv_clim_mod)
-# 
-# growth_clim_formula <- as.formula(paste(c("growth ~ log_size_t0*(year + site + ", paste(clim_vars, collapse = " + "), ") + (1|site.pop)"), collapse = " "))
-# growth_clim_mod <- lmer(formula = growth_clim_formula, data = growth_mod_data_scaled, REML = F)
-# 
-# repro_clim_formula <- as.formula(paste(c("flowered ~ log_size_t0*(year + site + ", paste(clim_vars, collapse = " + "), ") + (1|site.pop)"), collapse = " "))
-# repro_clim_mod <- glmer(repro_clim_formula, data = repro_mod_data_scaled, family = binomial)
-# 
-# nflrs_clim_formula <- as.formula(paste(c("total_flrs ~ log_size_t0*(year + site + ", paste(clim_vars, collapse = " + "), ") + (1|site.pop)"), collapse = " "))
-# nflrs_clim_mod <- glmer(nflrs_clim_formula, data = nflrs_dat, family = poisson)
+surv_clim_formula <- as.formula(paste(c("surv ~ log_size_t0*(year + site + ", paste(clim_vars, collapse = " + "), ") + (1|site.pop)"), collapse = " "))
+surv_clim_mod <- glmer(formula = surv_clim_formula, family = "binomial", data = surv_mod_data_scaled)
+summary(surv_clim_mod)
+
+growth_clim_formula <- as.formula(paste(c("growth ~ log_size_t0*(year + site + ", paste(clim_vars, collapse = " + "), ") + (1|site.pop)"), collapse = " "))
+growth_clim_mod <- lmer(formula = growth_clim_formula, data = growth_mod_data_scaled, REML = F)
+
+repro_clim_formula <- as.formula(paste(c("flowered ~ log_size_t0*(year + site + ", paste(clim_vars, collapse = " + "), ") + (1|site.pop)"), collapse = " "))
+repro_clim_mod <- glmer(repro_clim_formula, data = repro_mod_data_scaled, family = binomial)
+
+nflrs_clim_formula <- as.formula(paste(c("total_flrs ~ log_size_t0*(year + site + ", paste(clim_vars, collapse = " + "), ") + (1|site.pop)"), collapse = " "))
+nflrs_clim_mod <- glmer(nflrs_clim_formula, data = nflrs_mod_data_scaled, family = poisson)
 ```
 
 ```{r clim_dredge}
-# # Note: must not name the cluster 'cl' — MuMIn uses cl <- match.call() internally,
-# # which causes a name collision that silently breaks parallel dispatch.
-# clust <- makeCluster(32, type = "FORK")
-# 
-# dredge_surv_clim <- dredge(surv_clim_mod, cluster = clust, fixed = c("size_t0", "year"), trace = 2,
-#   subset = (ann_snow_days + win_meanT_mean + win_meanT_range + gs_snow_days + gs_meanT_mean + gs_meanT_range) <= 3 &
-#            !(ann_snow_days & win_meanT_mean) &
-#            !(ann_snow_days & gs_snow_days))
-# 
-# dredge_growth_clim <- dredge(growth_clim_mod, cluster = clust, fixed = c("size_t0", "year"), trace = 2,
-#   subset = (ann_snow_days + win_meanT_mean + win_meanT_range + gs_snow_days + gs_meanT_mean + gs_meanT_range) <= 3 &
-#            !(ann_snow_days & win_meanT_mean) &
-#            !(ann_snow_days & gs_snow_days))
-# 
-# dredge_repro_clim <- dredge(repro_clim_mod, cluster = clust, fixed = c("size_t0", "year"), trace = 2,
-#   subset = (ann_snow_days + win_meanT_mean + win_meanT_range + gs_snow_days + gs_meanT_mean + gs_meanT_range) <= 3 &
-#            !(ann_snow_days & win_meanT_mean) &
-#            !(ann_snow_days & gs_snow_days))
-# 
-# dredge_nflrs_clim <- dredge(nflrs_clim_mod, cluster = clust, fixed = c("size_t0", "year"), trace = 2,
-#   subset = (ann_snow_days + win_meanT_mean + win_meanT_range + gs_snow_days + gs_meanT_mean + gs_meanT_range) <= 3 &
-#            !(ann_snow_days & win_meanT_mean) &
-#            !(ann_snow_days & gs_snow_days))
-# 
-# stopCluster(clust)
+# Note: must not name the cluster 'cl' — MuMIn uses cl <- match.call() internally,
+# which causes a name collision that silently breaks parallel dispatch.
+clust <- makeCluster(32, type = "FORK")
+
+dredge_surv_clim <- dredge(surv_clim_mod, cluster = clust, fixed = c("size_t0", "year"), trace = 2,
+  subset = (ann_snow_days + win_meanT_mean + win_meanT_range + gs_snow_days + gs_meanT_mean + gs_meanT_range) <= 3 &
+           !(ann_snow_days & win_meanT_mean) &
+           !(ann_snow_days & gs_snow_days))
+
+dredge_growth_clim <- dredge(growth_clim_mod, cluster = clust, fixed = c("size_t0", "year"), trace = 2,
+  subset = (ann_snow_days + win_meanT_mean + win_meanT_range + gs_snow_days + gs_meanT_mean + gs_meanT_range) <= 3 &
+           !(ann_snow_days & win_meanT_mean) &
+           !(ann_snow_days & gs_snow_days))
+
+dredge_repro_clim <- dredge(repro_clim_mod, cluster = clust, fixed = c("size_t0", "year"), trace = 2,
+  subset = (ann_snow_days + win_meanT_mean + win_meanT_range + gs_snow_days + gs_meanT_mean + gs_meanT_range) <= 3 &
+           !(ann_snow_days & win_meanT_mean) &
+           !(ann_snow_days & gs_snow_days))
+
+dredge_nflrs_clim <- dredge(nflrs_clim_mod, cluster = clust, fixed = c("size_t0", "year"), trace = 2,
+  subset = (ann_snow_days + win_meanT_mean + win_meanT_range + gs_snow_days + gs_meanT_mean + gs_meanT_range) <= 3 &
+           !(ann_snow_days & win_meanT_mean) &
+           !(ann_snow_days & gs_snow_days))
+
+stopCluster(clust)
 ```
 
 ```{r clim_model_selection}
@@ -148,7 +148,7 @@ formula(growth_var_best_mod)
 vr_list <- list(
   surv = list(data = surv_mod_data_scaled, response = "surv", family = "binomial"),
   growth = list(data = growth_mod_data_scaled, response = "growth", family = "gaussian"),
-  growth_var = list(data = growth_var_mod_data_scaled, response = "growth_resid.sq", family = "gaussian"),
+  # growth_var = list(data = growth_var_mod_data_scaled, response = "growth_resid.sq", family = "gaussian"),
   flowered = list(data = repro_mod_data_scaled, response = "flowered", family = "binomial"),
   n_flrs = list(data = nflrs_mod_data_scaled, response = "total_flrs", family = "poisson")
 )
@@ -220,40 +220,40 @@ repro_clim_main <- base::intersect(all.vars(formula(repro_clim_best_mod)), clim_
 nflrs_clim_main <- base::intersect(all.vars(formula(nflrs_clim_best_mod)), clim_vars)
 growth_var_clim_main <- base::intersect(all.vars(formula(growth_var_best_mod)), clim_vars)
 
-# Formula: log_size_t0 * (year + site + clim + mt) + mt:clim + (1|site.pop)
+# Formula: log_size_t0 * (year + site + aspect.cat + clim + mt) + (clim) * (mt) + (1|site.pop)
 # Fixed in dredge: log_size_t0 and clim main effects.
-# Year, site, and mt terms are dredgeable.
+# Year, site, aspect.cat, and mt terms are dredgeable.
 # Models will not converge — that is expected; dredge only needs the model structure.
 
 surv_mt_formula <- as.formula(paste(
-  "surv ~ log_size_t0 * (year + site +",
-  paste(c(surv_clim_main, mt_vars), collapse = " + "), ") +",
-  paste(as.vector(outer(mt_vars, surv_clim_main, paste, sep = ":")), collapse = " + "),
-  "+ (1|site.pop)"
+  "surv ~ log_size_t0 * (year + site + aspect.cat +",
+  paste(c(surv_clim_main, mt_vars), collapse = " + "), ") + (",
+  paste(surv_clim_main, collapse = " + "), ") * (",
+  paste(mt_vars, collapse = " + "), ") + (1|site.pop)"
 ))
 surv_mt_mod <- glmer(surv_mt_formula, family = binomial, data = surv_mod_data_scaled)
 
 growth_mt_formula <- as.formula(paste(
-  "growth ~ log_size_t0 * (year + site +",
-  paste(c(growth_clim_main, mt_vars), collapse = " + "), ") +",
-  paste(as.vector(outer(mt_vars, growth_clim_main, paste, sep = ":")), collapse = " + "),
-  "+ (1|site.pop)"
+  "growth ~ log_size_t0 * (year + site + aspect.cat +",
+  paste(c(growth_clim_main, mt_vars), collapse = " + "), ") + (",
+  paste(growth_clim_main, collapse = " + "), ") * (",
+  paste(mt_vars, collapse = " + "), ") + (1|site.pop)"
 ))
 growth_mt_mod <- lmer(growth_mt_formula, data = growth_mod_data_scaled, REML = FALSE)
 
 repro_mt_formula <- as.formula(paste(
-  "flowered ~ log_size_t0 * (year + site +",
-  paste(c(repro_clim_main, mt_vars), collapse = " + "), ") +",
-  paste(as.vector(outer(mt_vars, repro_clim_main, paste, sep = ":")), collapse = " + "),
-  "+ (1|site.pop)"
+  "flowered ~ log_size_t0 * (year + site + aspect.cat +",
+  paste(c(repro_clim_main, mt_vars), collapse = " + "), ") + (",
+  paste(repro_clim_main, collapse = " + "), ") * (",
+  paste(mt_vars, collapse = " + "), ") + (1|site.pop)"
 ))
 repro_mt_mod <- glmer(repro_mt_formula, family = binomial, data = repro_mod_data_scaled)
 
 nflrs_mt_formula <- as.formula(paste(
-  "total_flrs ~ log_size_t0 * (year + site +",
-  paste(c(nflrs_clim_main, mt_vars), collapse = " + "), ") +",
-  paste(as.vector(outer(mt_vars, nflrs_clim_main, paste, sep = ":")), collapse = " + "),
-  "+ (1|site.pop)"
+  "total_flrs ~ log_size_t0 * (year + site + aspect.cat +",
+  paste(c(nflrs_clim_main, mt_vars), collapse = " + "), ") + (",
+  paste(nflrs_clim_main, collapse = " + "), ") * (",
+  paste(mt_vars, collapse = " + "), ") + (1|site.pop)"
 ))
 nflrs_mt_mod <- glmer(nflrs_mt_formula, family = poisson, data = nflrs_mod_data_scaled)
 
@@ -301,10 +301,10 @@ growth_var_mod_data_scaled <- growth_mod_data_scaled %>%
 growth_var_clim_main <- intersect(all.vars(formula(growth_var_best_mod)), clim_vars)
 
 growth_var_mt_formula <- as.formula(paste(
-  "growth_resid.sq ~ log_size_t0 * (year + site +",
-  paste(c(growth_var_clim_main, mt_vars), collapse = " + "), ") +",
-  paste(as.vector(outer(mt_vars, growth_var_clim_main, paste, sep = ":")), collapse = " + "),
-  "+ (1|site.pop)"
+  "growth_resid.sq ~ log_size_t0 * (year + site + aspect.cat +",
+  paste(c(growth_var_clim_main, mt_vars), collapse = " + "), ") + (",
+  paste(growth_var_clim_main, collapse = " + "), ") * (",
+  paste(mt_vars, collapse = " + "), ") + (1|site.pop)"
 ))
 growth_var_mt_mod <- lmer(growth_var_mt_formula, data = growth_var_mod_data_scaled, REML = FALSE)
 
