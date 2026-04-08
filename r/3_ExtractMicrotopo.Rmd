@@ -344,7 +344,7 @@ cat("Saved", nrow(all_plants), "plants across", length(pops), "populations.\n")
 ```{r microtopo_corrs}
 
 microtopo_dats <- read_csv("data/output/allPops_microtopo_25cm.csv") %>% 
-  dplyr::select(-plantID,-elv_pt) 
+  dplyr::select(-plantID,-elv_pt)
   
 remove_cols <- c(
   # paste0("prcv_",c(10,50)),
@@ -355,7 +355,7 @@ remove_cols <- c(
   # paste0("est_",c(10,50)),
   # paste0("tri_",c(10,50)),
   # paste0("tpi_",c(10,50)),
-  # paste0("slp_",c(25)),
+  paste0("slp_",c(25)),
   "slpT_25",
   "estT_25",
   # "ms_tpi_50",
@@ -364,11 +364,11 @@ remove_cols <- c(
   # "pop_slp","pop_nrt","pop_est"
 )
 
-corr_dats <- microtopo_dats %>% 
+corr_dats <- microtopo_dats  %>% 
   dplyr::select(-all_of(remove_cols)) %>%                    
   dplyr::select(-starts_with("ms_")) %>%                    
-  correlate(quiet = TRUE) %>%
-  stretch(na.rm = TRUE) 
+  corrr::correlate(quiet = TRUE) %>%
+  corrr::stretch(na.rm = TRUE)
 
 ggplot(corr_dats,aes(x, y, fill = r, label = round(r, 2))) +
   geom_tile() +
