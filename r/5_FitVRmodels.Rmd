@@ -228,19 +228,103 @@ growth_var_clim_main <- base::intersect(all.vars(formula(growth_var_best_mod)), 
 # Fixed in dredge: log_size_t0 and clim main effects.
 # Year, site, aspect.cat, and mt terms are dredgeable.
 # Models will not converge — that is expected; dredge only needs the model structure.
-mod_mt_vars <- c(setdiff(mt_vars,c("prcv_25","plcv_25")),"aspect.cat")
+mod_mt_vars <- c(# setdiff(
+  mt_vars,
+                         # c("prcv_25","plcv_25")),
+                 "aspect.cat")
+```
+
+# try to winnow variables one at a time using AICc
+```{r test_mt_vars}
+
+# survival
+survival_base <- surv_clim_best_mod
+AICc(survival_base)
+
+for(mt_var in mt_vars){
+  mod_new <- update( surv_clim_best_mod, as.formula(paste(". ~ . +", mt_var)))
+  AICc(mod_new)                   
+  cat(paste(c(mt_var,"new:",round(AICc(mod_new),2),"base:2989.59\n")))
+}
+# est_25   new: 2988.73   base:2989.59
+# nrt_25   new: 2981.19   base:2989.59
+# tpi_25   new: 2985.37   base:2989.59
+# tri_25   new: 2991.41   base:2989.59
+# plcv_25  new: 2991.31   base:2989.59
+
+# growth
+growth_base <- growth_clim_best_mod
+AICc(growth_base)
+for(mt_var in mt_vars){
+  mod_new <- update(growth_clim_best_mod, as.formula(paste(". ~ . +", mt_var)))
+  AICc(mod_new)                   
+  cat(paste(c(mt_var,"new:",round(AICc(mod_new),2),"base:-131.19\n")))
+  # cat(paste0("delta AICc:",-131.19 - round(AICc(mod_new),2),"\n" ))
+}
+
+# est_25 new: -129.2 base:-131.19. # worse
+# nrt_25 new: -132.96 base:-131.19 # 
+# tpi_25 new: -131.75 base:-131.19
+# tri_25 new: -129.33 base:-131.19
+# plcv_25 new: -130.1 base:-131.19
+# prcv_25 new: -130.47 base:-131.19
+
+
+# nflr
+nflr_mt_vars <- c("tpi_25")
+nflr_base <-nflrs_clim_best_mod
+AICc(nflr_base)
+for(mt_var in mt_vars){
+  mod_new <- update(nflr_base, as.formula(paste(". ~ . +", mt_var)))
+  AICc(mod_new)                   
+  cat(paste(c(mt_var,"new:",round(AICc(mod_new),2),"base:40653.52\n")))
+  cat("diff:",40653.52 - round(AICc(mod_new),2),"\n")
+  # cat(paste0("delta AICc:",-131.19 - round(AICc(mod_new),2),"\n" ))
+}
+# est_25 new: 40655.51 base:40653.52
+# -1.99 
+# nrt_25 new: 40654.48 base:40653.52
+# -0.96 
+# tpi_25 new: 40524.15 base:40653.52
+# 129.37 
+# tri_25 new: 40654.51 base:40653.52
+# -0.99 
+# plcv_25 new: 40655.42 base:40653.52
+# -1.9 
+# prcv_25 new: 40655.24 base:40653.52
+# -1.72 
+
+
+# repro
+repro_base <- repro_clim_best_mod
+base_AICc <- AICc(repro_base)
+for(mt_var in mt_vars){
+  mod_new <- update(repro_base, as.formula(paste(". ~ . +", mt_var)))
+  AICc(mod_new)                   
+  cat(paste(c(mt_var,"new:",round(AICc(mod_new),2),"base:5720.43\n")))
+  cat("diff:",base_AICc - round(AICc(mod_new),2),"\n")
+  # cat(paste0("delta AICc:",-131.19 - round(AICc(mod_new),2),"\n" ))
+}
+
+surv_mt_vars <- c("est_25", "nrt_25", "tpi_25")
+growth_mt_vars <- c("nrt_25","tpi_25")
+nflrs_mt_vars <- c("tpi_25")
+repro_mt_vars <- c("tri_25")
+```
+
+
+```{r mt_global_models}
 
 surv_mt_formula <- as.formula(paste(
   "surv ~ log_size_t0 * (year + site + ",
-  paste(c(surv_clim_main, mod_mt_vars), collapse = " + "), ") + (",
+  paste(c(surv_clim_main, surv_mt_vars), collapse = " + "), ") + (",
   paste(surv_clim_main, collapse = " + "), ") * (",
-  paste(mod_mt_vars, collapse = " + "), ") + (1|site.pop)"
+  paste(surv_mt_vars, collapse = " + "), ") + (1|site.pop)"
 ))
 surv_mt_mod <- glmer(surv_mt_formula, family = binomial, data = surv_mod_data_scaled)
 formula(surv_mt_mod)
 length(attr(terms(surv_mt_mod), "term.labels"))
 
-growth_mt_vars <- setdiff(mod_mt_vars,"est_25")
 growth_mt_formula <- as.formula(paste(
   "growth ~ log_size_t0 * (year + site + ",
   paste(c(growth_clim_main, growth_mt_vars), collapse = " + "), ") + (",
@@ -251,7 +335,6 @@ growth_mt_mod <- lmer(growth_mt_formula, data = growth_mod_data_scaled, REML = F
 formula(growth_mt_mod)
 length(attr(terms(growth_mt_mod), "term.labels"))
 
-repro_mt_vars <- setdiff(mod_mt_vars,"nrt_25")
 repro_mt_formula <- as.formula(paste(
   "flowered ~ log_size_t0 * (year + site + ",
   paste(c(repro_clim_main, repro_mt_vars), collapse = " + "), ") + (",
@@ -262,7 +345,6 @@ repro_mt_mod <- glmer(repro_mt_formula, family = binomial, data = repro_mod_data
 formula(repro_mt_formula)
 length(attr(terms(repro_mt_mod), "term.labels"))
 
-nflrs_mt_vars <- setdiff(mod_mt_vars,"est_25")
 nflrs_mt_formula <- as.formula(paste(
   "total_flrs ~ log_size_t0 * (year + site + ",
   paste(c(nflrs_clim_main, nflrs_mt_vars), collapse = " + "), ") + (",
@@ -280,20 +362,20 @@ length(attr(terms(nflrs_mt_mod), "term.labels"))
 clust <- makeCluster(40, type = "FORK")
 
 dredge_surv_mt <- dredge(surv_mt_mod, cluster = clust, m.lim = c(0,15),
-  fixed = c("log_size_t0", "year", surv_clim_main), trace = 2,
-  subset = (est_25 + nrt_25 + tpi_25 + tri_25) <= 3)
+  fixed = c("log_size_t0", "year", surv_clim_main), trace = 2)#,
+  # subset = (est_25 + nrt_25 + tpi_25 + tri_25) <= 3)
 
 dredge_growth_mt <- dredge(growth_mt_mod, cluster = clust, m.lim = c(0,15),
-  fixed = c("log_size_t0", growth_clim_main), trace = 2,
-  subset = (est_25 + nrt_25 + tpi_25 + tri_25) <= 3)
+  fixed = c("log_size_t0", growth_clim_main), trace = 2)#,
+  # subset = (est_25 + nrt_25 + tpi_25 + tri_25) <= 3)
 
 dredge_repro_mt <- dredge(repro_mt_mod, cluster = clust, m.lim = c(0,15),
-  fixed = c("log_size_t0", repro_clim_main), trace = 2,
-  subset = (est_25 + tpi_25 + tri_25) <= 3)
+  fixed = c("log_size_t0", repro_clim_main), trace = 2)#,
+  #subset = (est_25 + tpi_25 + tri_25) <= 3)
 
 dredge_nflrs_mt <- dredge(nflrs_mt_mod, cluster = clust, m.lim = c(0,15),
-  fixed = c("log_size_t0", nflrs_clim_main), trace = 2,
-  subset = (nrt_25 + tpi_25 + tri_25) <= 3)
+  fixed = c("log_size_t0", nflrs_clim_main), trace = 2)#,
+ # subset = (nrt_25 + tpi_25 + tri_25) <= 3)
 
 stopCluster(clust)
 ```
