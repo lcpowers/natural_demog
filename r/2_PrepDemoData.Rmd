@@ -61,7 +61,7 @@ for(i in 1:nrow(gp_mltplpcs)){
   
   if(length(A1)!=length(A2)){
     
-    cat("Missing pc size measurements for plant",row.i$id,"\n")
+    cat("Missing pc size measurements for plant",row.i$plantID,"\n")
     
   }
   
