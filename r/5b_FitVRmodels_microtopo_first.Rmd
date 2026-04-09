@@ -434,13 +434,13 @@ clim2mt_dredge_top10 <- list(
 )
 
 mt2clim_model_list <- list(
-  growth_var_mt2clim_best_mod = growth_var_mt_best_mod,
+  growth_var_mt2clim_best_mod = growth_var_clim_mt_best_mod,
   growth_var_mt2clim_best_mod_data = growth_var_mod_data_scaled ,
   
-  surv_mt2clim_best_mod = surv_mt_best_mod,
-  growth_mt2clim_best_mod = growth_mt_best_mod,
-  repro_mt2clim_best_mod = repro_mt_best_mod,
-  nflrs_mt2clim_best_mod = nflrs_mt_best_mod
+  surv_mt2clim_best_mod = surv_clim_mt_best_mod,
+  growth_mt2clim_best_mod = growth_clim_mt_best_mod,
+  repro_mt2clim_best_mod = repro_mt_clim_best_mod,
+  nflrs_mt2clim_best_mod = nflrs_mt_clim_best_mod
 )
 
 saveRDS(mt2clim_model_list,"r/modelFitResults/best_mt2clim_mods_Apr9.RDS")
