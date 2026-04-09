@@ -117,7 +117,7 @@ mt_mods <- list(surv_mt_best_mod = surv_mt_best_mod,
                   growth_mt_best_mod = growth_mt_best_mod,
                   repro_mt_best_mod = repro_mt_best_mod,
                   nflrs_mt_best_mod = nflrs_mt_best_mod,
-                  growth_var_mt_best_mod = growth_mt_best_mod,
+                  growth_var_mt_best_mod = growth_var_mt_best_mod,
                   growth_var_mt_mod_data_scaled = growth_var_mod_data_scaled)
 
 saveRDS(mt_mods,"r/modelFitResults/best_mt_mods_Apr9.RDS")
@@ -443,6 +443,6 @@ mt2clim_model_list <- list(
   nflrs_mt2clim_best_mod = nflrs_mt_best_mod
 )
 
-saveRDS(clim_then_mt_model_list,"r/modelFitResults/best_clim_then_mt_mods_Apr8.RDS")
+saveRDS(mt2clim_model_list,"r/modelFitResults/best_mt2clim_mods_Apr9.RDS")
 ```
 
