@@ -215,89 +215,91 @@ repro_clim_vars <- c("gs_meanT_mean","gs_meanT_range","win_meanT_range")
 ```{r test_mt_vars}
 
 # survival
-survival_base <- surv_clim_best_mod
-AICc(survival_base)
+survival_base <- surv_mt_best_mod
+base_AICc <- AICc(survival_base)
 
-for(mt_var in mt_vars){
-  mod_new <- update( surv_clim_best_mod, as.formula(paste(". ~ . +", mt_var)))
+for(clim_var in clim_vars){
+  mod_new <- update(survival_base, as.formula(paste(". ~ . +", clim_var)))
   AICc(mod_new)                   
-  cat(paste(c(mt_var,"new:",round(AICc(mod_new),2),"base:2989.59\n")))
+  cat(paste(c(clim_var,"new:",round(AICc(mod_new),2),"base:",round(base_AICc,2),"\n")))
 }
-# est_25   new: 2988.73   base:2989.59
-# nrt_25   new: 2981.19   base:2989.59
-# tpi_25   new: 2985.37   base:2989.59
-# tri_25   new: 2991.41   base:2989.59
-# plcv_25  new: 2991.31   base:2989.59
+# ann_snow_days new: 3004.21 base: 3005.65 
+# win_meanT_mean new: 3001.98 base: 3005.65 
+# win_meanT_range new: 3006.87 base: 3005.65 
+# gs_snow_days new: 3004.85 base: 3005.65 
+# gs_meanT_mean new: 2997.5 base: 3005.65 
+# gs_meanT_range new: 2987.27 base: 3005.65 
 
 # growth
-growth_base <- growth_clim_best_mod
-AICc(growth_base)
-for(mt_var in mt_vars){
-  mod_new <- update(growth_clim_best_mod, as.formula(paste(". ~ . +", mt_var)))
+growth_base <- growth_mt_best_mod
+base_AICc <- AICc(growth_base)
+
+for(clim_var in clim_vars){
+  mod_new <- update(growth_base, as.formula(paste(". ~ . +", clim_var)))
   AICc(mod_new)                   
-  cat(paste(c(mt_var,"new:",round(AICc(mod_new),2),"base:-131.19\n")))
-  # cat(paste0("delta AICc:",-131.19 - round(AICc(mod_new),2),"\n" ))
+  cat(paste(c(clim_var,"new:",round(AICc(mod_new),2),"base:",round(base_AICc,2),"\n")))
 }
 
-# est_25 new: -129.2 base:-131.19. # worse
-# nrt_25 new: -132.96 base:-131.19 # 
-# tpi_25 new: -131.75 base:-131.19
-# tri_25 new: -129.33 base:-131.19
-# plcv_25 new: -130.1 base:-131.19
-# prcv_25 new: -130.47 base:-131.19
-
+# ann_snow_days new: -141.85 base: -141.01 
+# win_meanT_mean new: -140.59 base: -141.01 ##
+# win_meanT_range new: -139.44 base: -141.01 ##
+# gs_snow_days new: -150.75 base: -141.01 
+# gs_meanT_mean new: -149.93 base: -141.01 
+# gs_meanT_range new: -140.43 base: -141.01 ##
 
 # nflr
-nflr_mt_vars <- c("tpi_25")
-nflr_base <-nflrs_clim_best_mod
-AICc(nflr_base)
-for(mt_var in mt_vars){
-  mod_new <- update(nflr_base, as.formula(paste(". ~ . +", mt_var)))
-  AICc(mod_new)                   
-  cat(paste(c(mt_var,"new:",round(AICc(mod_new),2),"base:40653.52\n")))
-  cat("diff:",40653.52 - round(AICc(mod_new),2),"\n")
-  # cat(paste0("delta AICc:",-131.19 - round(AICc(mod_new),2),"\n" ))
-}
-# est_25 new: 40655.51 base:40653.52
-# -1.99 
-# nrt_25 new: 40654.48 base:40653.52
-# -0.96 
-# tpi_25 new: 40524.15 base:40653.52
-# 129.37 
-# tri_25 new: 40654.51 base:40653.52
-# -0.99 
-# plcv_25 new: 40655.42 base:40653.52
-# -1.9 
-# prcv_25 new: 40655.24 base:40653.52
-# -1.72 
+nflr_base <- nflrs_mt_best_mod
+base_AICc <- AICc(nflr_base)
 
+for(clim_var in clim_vars){
+  mod_new <- update(nflr_base, as.formula(paste(". ~ . +", clim_var)))
+  AICc(mod_new)                   
+  cat(paste(c(clim_var,"new:",round(AICc(mod_new),2),"base:",round(base_AICc,2),"\n")))
+  cat(round(base_AICc,2) - round(AICc(mod_new),2),"\n")
+}
+# ann_snow_days   new: 40433.65 base: 40450.97 
+# win_meanT_mean  new: 40445.67 base: 40450.97 
+# win_meanT_range new: 40421.95 base: 40450.97  ### 3
+# gs_snow_days    new: 40358.21 base: 40450.97  # 1
+# gs_meanT_mean   new: 40406.11 base: 40450.97  ## 2
+# gs_meanT_range  new: 40440.41 base: 40450.97  
 
 # repro
-repro_base <- repro_clim_best_mod
+repro_base <- repro_mt_best_mod
 base_AICc <- AICc(repro_base)
-for(mt_var in mt_vars){
-  mod_new <- update(repro_base, as.formula(paste(". ~ . +", mt_var)))
+
+for(clim_var in clim_vars){
+  mod_new <- update(repro_base, as.formula(paste(". ~ . +", clim_var)))
   AICc(mod_new)                   
-  cat(paste(c(mt_var,"new:",round(AICc(mod_new),2),"base:5720.43\n")))
-  cat("diff:",base_AICc - round(AICc(mod_new),2),"\n")
-  # cat(paste0("delta AICc:",-131.19 - round(AICc(mod_new),2),"\n" ))
+  cat(paste(c(clim_var,"new:",round(AICc(mod_new),2),"base:",round(base_AICc,2),"\n")))
+  cat(round(base_AICc,2) - round(AICc(mod_new),2),"\n")
 }
 
-surv_mt_vars <- c("est_25", "nrt_25", "tpi_25")
-growth_mt_vars <- c("nrt_25","tpi_25")
-nflrs_mt_vars <- c("tpi_25")
-repro_mt_vars <- c("tri_25")
+# ann_snow_days new: 5755.13 base: 5756.13 
+# 1 
+# win_meanT_mean new: 5758.11 base: 5756.13 
+# -1.98 
+# win_meanT_range new: 5739.51 base: 5756.13 ### 3
+# 16.62 
+# gs_snow_days new: 5737.55 base: 5756.13 # 1
+# 18.58 
+# gs_meanT_mean new: 5737.7 base: 5756.13 ## 2
+# 18.43 
+# gs_meanT_range new: 5757.51 base: 5756.13 
+# -1.38 
+
 ```
 
 
 ```{r mt_global_models}
 
-surv_clim_mt_formula <- as.formula(paste(
+surv_mt2clim_formula <- as.formula(paste(
   "surv ~ log_size_t0 * (year + site + aspect.cat + ",
   paste(c(surv_clim_vars, surv_mt_vars), collapse = " + "), ") + (",
   paste(surv_clim_vars, collapse = " + "), ") * (",
   paste(surv_mt_vars, collapse = " + "), ") + (1|site.pop)"
 ))
+
 surv_clim_mt_mod <- glmer(surv_clim_mt_formula, family = binomial, data = surv_mod_data_scaled)
 formula(surv_clim_mt_mod)
 length(attr(terms(surv_clim_mt_mod), "term.labels"))
