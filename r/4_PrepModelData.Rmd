@@ -64,7 +64,7 @@ repro_mod_data_scaled <- repro_mod_data %>%
 
 nflrs_mod_data_scaled <- repro_mod_data %>% 
   filter(flowered == 1) %>%
-  mutate(across(all_of(c(mt_vars, clim_vars)), ~ as.numeric(scale(.))), year = factor(year)) %>%
+  mutate(across(all_of(c(mt_vars, clim_vars,"log_size_t0")), ~ as.numeric(scale(.))), year = factor(year)) %>%
   dplyr::select(-log_size) %>%
   mutate(total_flrs = round(total_flrs)) %>%
   na.omit() %>%
