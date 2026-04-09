@@ -1,0 +1,29 @@
+---
+title: "Look at best models"
+output: html_document
+date: "2026-04-09"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Climate to microtopo mods
+```{r clim2mt}
+rm(list=ls())
+library(tidyverse)
+
+clim2mt_mods <- readRDS("r/modelFitResults/best_clim_then_mt_mods_Apr8.RDS")
+
+growth_var_mod <- clim2mt_mods[[1]]
+growth_var_data <- clim2mt_mods[[2]]
+
+surv_mod <- clim2mt_mods[[3]]
+growth_mod <- clim2mt_mods[[4]]
+repro_mod <- clim2mt_mods[[5]]
+nflrs_mod <- clim2mt_mods[[6]]
+
+sjPlot::plot_model(surv_mod,type="pred",terms="log_size_t0")
+
+```
+

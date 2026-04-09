@@ -25,23 +25,24 @@ clim_vars <- names(clim)[!names(clim) %in% c("site", "pop", "year")]
 
 microtopo <- read_csv("data/output/model_microtopo_25cm.csv")
 mt_vars <- names(microtopo)[!names(microtopo) %in% c("site", "pop", "plantID","elv_pt")]
+
 ```
 
 # --------------
 # Fit and dredge global models
 
 ```{r vr_global_models}
-surv_clim_formula <- as.formula(paste(c("surv ~ log_size_t0*(year + site + ", paste(clim_vars, collapse = " + "), ") + (1|site.pop)"), collapse = " "))
+surv_clim_formula <- as.formula(paste(c("surv ~ log_size_t0*(year + site + aspect.cat + ", paste(clim_vars, collapse = " + "), ") + (1|site.pop)"), collapse = " "))
 surv_clim_mod <- glmer(formula = surv_clim_formula, family = "binomial", data = surv_mod_data_scaled)
 summary(surv_clim_mod)
 
-growth_clim_formula <- as.formula(paste(c("growth ~ log_size_t0*(year + site + ", paste(clim_vars, collapse = " + "), ") + (1|site.pop)"), collapse = " "))
+growth_clim_formula <- as.formula(paste(c("growth ~ log_size_t0*(year + site + aspect.cat + ", paste(clim_vars, collapse = " + "), ") + (1|site.pop)"), collapse = " "))
 growth_clim_mod <- lmer(formula = growth_clim_formula, data = growth_mod_data_scaled, REML = F)
 
-repro_clim_formula <- as.formula(paste(c("flowered ~ log_size_t0*(year + site + ", paste(clim_vars, collapse = " + "), ") + (1|site.pop)"), collapse = " "))
+repro_clim_formula <- as.formula(paste(c("flowered ~ log_size_t0*(year + site + aspect.cat + ", paste(clim_vars, collapse = " + "), ") + (1|site.pop)"), collapse = " "))
 repro_clim_mod <- glmer(repro_clim_formula, data = repro_mod_data_scaled, family = binomial)
 
-nflrs_clim_formula <- as.formula(paste(c("total_flrs ~ log_size_t0*(year + site + ", paste(clim_vars, collapse = " + "), ") + (1|site.pop)"), collapse = " "))
+nflrs_clim_formula <- as.formula(paste(c("total_flrs ~ log_size_t0*(year + site + aspect.cat + ", paste(clim_vars, collapse = " + "), ") + (1|site.pop)"), collapse = " "))
 nflrs_clim_mod <- glmer(nflrs_clim_formula, data = nflrs_mod_data_scaled, family = poisson)
 ```
 

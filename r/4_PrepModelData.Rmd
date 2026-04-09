@@ -34,7 +34,7 @@ surv_mod_data <- surv %>%
   left_join(pop_info)
 
 surv_mod_data_scaled <- surv_mod_data %>%
-  mutate(across(all_of(c(mt_vars, clim_vars,pop_topo_vars)), ~ as.numeric(scale(.))), 
+  mutate(across(all_of(c(mt_vars, clim_vars,pop_topo_vars,"log_size_t0")), ~ as.numeric(scale(.))), 
          year = factor(year)) %>%
   dplyr::select(-log_size) %>%
   na.omit() %>%
@@ -46,8 +46,8 @@ growth_mod_data <- growth %>%
   left_join(pop_info)
 
 growth_mod_data_scaled <- growth_mod_data %>%
-  mutate(across(all_of(c(mt_vars, clim_vars,pop_topo_vars)), ~ as.numeric(scale(.))), year = factor(year)) %>%
-  select(-log_size) %>%
+  mutate(across(all_of(c(mt_vars, clim_vars,pop_topo_vars,"log_size_t0")), ~ as.numeric(scale(.))), year = factor(year)) %>%
+  dplyr::select(-log_size) %>%
   na.omit() %>%
   mutate(site.pop = paste(site, pop, sep = "."))
 
@@ -57,15 +57,15 @@ repro_mod_data <- repro %>%
   left_join(pop_info)
 
 repro_mod_data_scaled <- repro_mod_data %>%
-  mutate(across(all_of(c(mt_vars, clim_vars,pop_topo_vars)), ~ as.numeric(scale(.))), year = factor(year)) %>%
-  select(-log_size) %>%
+  mutate(across(all_of(c(mt_vars, clim_vars,pop_topo_vars,"log_size_t0")), ~ as.numeric(scale(.))), year = factor(year)) %>%
+  dplyr::select(-log_size) %>%
   na.omit() %>%
   mutate(site.pop = paste(site, pop, sep = "."))
 
 nflrs_mod_data_scaled <- repro_mod_data %>% 
   filter(flowered == 1) %>%
   mutate(across(all_of(c(mt_vars, clim_vars)), ~ as.numeric(scale(.))), year = factor(year)) %>%
-  select(-log_size) %>%
+  dplyr::select(-log_size) %>%
   mutate(total_flrs = round(total_flrs)) %>%
   na.omit() %>%
   mutate(site.pop = paste(site, pop, sep = "."))
