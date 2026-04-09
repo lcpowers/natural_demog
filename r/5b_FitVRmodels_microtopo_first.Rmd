@@ -107,7 +107,7 @@ dredge_growth_var_mt <- dredge(growth_var_mt_mod, cluster = clust, fixed = c("lo
 stopCluster(clust)
 
 growth_var_mt_best_mod <- get.models(dredge_growth_var_mt, subset = 1)[[1]]
-growth_var_mt_vars <- intersect(rownames(summary(growth_var_best_mod)$coefficients), mt_mod_vars)
+growth_var_mt_vars <- intersect(rownames(summary(growth_var_mt_best_mod)$coefficients), mt_mod_vars)
 ```
 
 # save best mt models
@@ -324,121 +324,121 @@ repro_clim_vars <- c("gs_meanT_mean","gs_snow_days")
 # Formula structure mirrors file 5 but with mt and clim roles swapped:
 #   log_size_t0 * (year + site + aspect.cat + mt_main + clim_vars) + (mt_main) * (clim_vars) + (1|site.pop)
 
-surv_clim_mt_formula <- as.formula(paste(
+surv_mt_clim_formula <- as.formula(paste(
   "surv ~ log_size_t0 * (year + site + aspect.cat + ",
   paste(c(surv_mt_vars, surv_clim_vars), collapse = " + "), ") + (",
   paste(surv_mt_vars, collapse = " + "), ") * (",
   paste(surv_clim_vars, collapse = " + "), ") + (1|site.pop)"
 ))
-surv_clim_mt_mod <- glmer(surv_clim_mt_formula, family = binomial, data = surv_mod_data_scaled)
-formula(surv_clim_mt_mod)
-length(attr(terms(surv_clim_mt_mod), "term.labels"))
+surv_mt_clim_mod <- glmer(surv_mt_clim_formula, family = binomial, data = surv_mod_data_scaled)
+formula(surv_mt_clim_mod)
+length(attr(terms(surv_mt_clim_mod), "term.labels"))
 
-growth_clim_mt_formula <- as.formula(paste(
+growth_mt_clim_formula <- as.formula(paste(
   "growth ~ log_size_t0 * (year + site + aspect.cat + ",
   paste(c(growth_mt_vars, growth_clim_vars), collapse = " + "), ") + (",
   paste(growth_mt_vars, collapse = " + "), ") * (",
   paste(growth_clim_vars, collapse = " + "), ") + (1|site.pop)"
 ))
-growth_clim_mt_mod <- lmer(growth_clim_mt_formula, data = growth_mod_data_scaled, REML = FALSE)
-formula(growth_clim_mt_mod)
-length(attr(terms(growth_clim_mt_mod), "term.labels"))
+growth_mt_clim_mod <- lmer(growth_mt_clim_formula, data = growth_mod_data_scaled, REML = FALSE)
+formula(growth_mt_clim_mod)
+length(attr(terms(growth_mt_clim_mod), "term.labels"))
 
-repro_clim_mt_formula <- as.formula(paste(
+repro_mt_clim_formula <- as.formula(paste(
   "flowered ~ log_size_t0 * (year + site + aspect.cat + ",
   paste(c(repro_mt_vars, repro_clim_vars), collapse = " + "), ") + (",
   paste(repro_mt_vars, collapse = " + "), ") * (",
   paste(repro_clim_vars, collapse = " + "), ") + (1|site.pop)"
 ))
-repro_clim_mt_mod <- glmer(repro_clim_mt_formula, family = binomial, data = repro_mod_data_scaled)
-formula(repro_clim_mt_mod)
-length(attr(terms(repro_clim_mt_mod), "term.labels"))
+repro_mt_clim_mod <- glmer(repro_mt_clim_formula, family = binomial, data = repro_mod_data_scaled)
+formula(repro_mt_clim_mod)
+length(attr(terms(repro_mt_clim_mod), "term.labels"))
 
-nflrs_clim_mt_formula <- as.formula(paste(
+nflrs_mt_clim_formula <- as.formula(paste(
   "total_flrs ~ log_size_t0 * (year + site + aspect.cat + ",
   paste(c(nflrs_mt_vars, nflrs_clim_vars), collapse = " + "), ") + (",
   paste(nflrs_mt_vars, collapse = " + "), ") * (",
   paste(nflrs_clim_vars, collapse = " + "), ") + (1|site.pop)"
 ))
-nflrs_clim_mt_mod <- glmer(nflrs_clim_mt_formula, family = poisson, data = nflrs_mod_data_scaled)
-formula(nflrs_clim_mt_mod)
-length(attr(terms(nflrs_clim_mt_mod), "term.labels"))
+nflrs_mt_clim_mod <- glmer(nflrs_mt_clim_formula, family = poisson, data = nflrs_mod_data_scaled)
+formula(nflrs_mt_clim_mod)
+length(attr(terms(nflrs_mt_clim_mod), "term.labels"))
 ```
 
-```{r clim_mt_dredge}
+```{r mt_clim_dredge}
 # Note: do not name the cluster 'cl' — MuMIn uses cl <- match.call() internally,
 # which causes a name collision that silently breaks parallel dispatch.
 clust <- makeCluster(32, type = "FORK")
 
 # MT main effects are fixed; climate terms are dredgeable.
-dredge_surv_clim_mt <- dredge(surv_clim_mt_mod, cluster = clust, m.lim = c(0,15),
+dredge_surv_mt_clim <- dredge(surv_mt_clim_mod, cluster = clust, m.lim = c(0,15),
   fixed = c("log_size_t0", surv_mt_vars), trace = 2)
 
-dredge_growth_clim_mt <- dredge(growth_clim_mt_mod, cluster = clust, m.lim = c(0,15),
+dredge_growth_mt_clim <- dredge(growth_mt_clim_mod, cluster = clust, m.lim = c(0,15),
   fixed = c("log_size_t0", growth_mt_vars), subset = !(ann_snow_days & gs_snow_days), trace = 2)
 
-dredge_repro_clim_mt <- dredge(repro_clim_mt_mod, cluster = clust, m.lim = c(0,15),
+dredge_repro_mt_clim <- dredge(repro_mt_clim_mod, cluster = clust, m.lim = c(0,15),
   fixed = c("log_size_t0", repro_mt_vars), trace = 2)
 
-dredge_nflrs_clim_mt <- dredge(nflrs_clim_mt_mod, cluster = clust, m.lim = c(0,15),
+dredge_nflrs_mt_clim <- dredge(nflrs_mt_clim_mod, cluster = clust, m.lim = c(0,15),
   fixed = c("log_size_t0", nflrs_mt_vars), trace = 2)
 
 stopCluster(clust)
 ```
 
-```{r clim_mt_model_selection}
-surv_clim_mt_best_mod   <- get.models(dredge_surv_clim_mt,   subset = )[[1]]
-growth_clim_mt_best_mod <- get.models(dredge_growth_clim_mt, subset = )[[1]]
-repro_clim_mt_best_mod  <- get.models(dredge_repro_clim_mt,  subset = )[[1]]
-nflrs_clim_mt_best_mod  <- get.models(dredge_nflrs_clim_mt,  subset = )[[1]]
+```{r mt_clim_model_selection}
+surv_mt_clim_best_mod   <- get.models(dredge_surv_mt_clim,   subset = )[[1]]
+growth_mt_clim_best_mod <- get.models(dredge_growth_mt_clim, subset = )[[1]]
+repro_mt_clim_best_mod  <- get.models(dredge_repro_mt_clim,  subset = )[[1]]
+nflrs_mt_clim_best_mod  <- get.models(dredge_nflrs_mt_clim,  subset = )[[1]]
 ```
 
-```{r growth_var_clim_mt_dredge}
+```{r growth_var_mt_clim_dredge}
 growth_var_mod_data_scaled <- growth_mod_data_scaled %>%
-  mutate(growth_resid.sq = residuals(growth_clim_mt_best_mod)^2)
+  mutate(growth_resid.sq = residuals(growth_mt_clim_best_mod)^2)
 
 # MT main effects carried forward from the best combined growth model
-growth_var_mt_main <- intersect(all.vars(formula(growth_clim_mt_best_mod)), mt_vars)
+growth_var_mt_main <- intersect(all.vars(formula(growth_mt_clim_best_mod)), mt_vars)
 
 # Clim vars to consider for growth variance — same pool used above
 growth_var_clim_vars <- growth_clim_vars
 
-growth_var_clim_mt_formula <- as.formula(paste(
+growth_var_mt_clim_formula <- as.formula(paste(
   "growth_resid.sq ~ log_size_t0 * (year + site +",
   paste(c(growth_var_mt_main, growth_var_clim_vars), collapse = " + "), ") + (",
   paste(growth_var_mt_main, collapse = " + "), ") * (",
   paste(growth_var_clim_vars, collapse = " + "), ") + (1|site.pop)"
 ))
-growth_var_clim_mt_mod <- lmer(growth_var_clim_mt_formula, data = growth_var_mod_data_scaled, REML = FALSE)
+growth_var_mt_clim_mod <- lmer(growth_var_mt_clim_formula, data = growth_var_mod_data_scaled, REML = FALSE)
 
 clust <- makeCluster(40, type = "FORK")
 
-dredge_growth_var_clim_mt <- dredge(growth_var_clim_mt_mod, cluster = clust,
+dredge_growth_var_mt_clim <- dredge(growth_var_mt_clim_mod, cluster = clust,
   fixed = c("log_size_t0", "year", growth_var_mt_main), trace = 2)
 
 stopCluster(clust)
 
-growth_var_clim_mt_best_mod <- get.models(dredge_growth_var_clim_mt, subset = 1)[[1]]
+growth_var_mt_clim_best_mod <- get.models(dredge_growth_var_mt_clim, subset = 1)[[1]]
 ```
 Save all of the models
 ```{r}
 
 clim2mt_dredge_top10 <- list(
   
-  surv_dredge_clim2mt = as.data.frame(dredge_surv_clim_mt) %>% slice_head(n = 10),
-  growth_dredge_clim2mt = as.data.frame(dredge_growth_clim_mt) %>% slice_head(n = 10),
-  growth_var_dredge_clim2mt = as.data.frame(dredge_growth_var_clim_mt) %>% slice_head(n = 10),
-  repro_dredge_clim2mt = as.data.frame(dredge_repro_clim_mt) %>% slice_head(n = 10),
-  nflrs_dredge_clim2mt = as.data.frame(dredge_nflrs_clim_mt) %>% slice_head(n = 10)
+  surv_dredge_clim2mt = as.data.frame(dredge_surv_mt_clim) %>% slice_head(n = 10),
+  growth_dredge_clim2mt = as.data.frame(dredge_growth_mt_clim) %>% slice_head(n = 10),
+  growth_var_dredge_clim2mt = as.data.frame(dredge_growth_var_mt_clim) %>% slice_head(n = 10),
+  repro_dredge_clim2mt = as.data.frame(dredge_repro_mt_clim) %>% slice_head(n = 10),
+  nflrs_dredge_clim2mt = as.data.frame(dredge_nflrs_mt_clim) %>% slice_head(n = 10)
   
 )
 
 mt2clim_model_list <- list(
-  growth_var_mt2clim_best_mod = growth_var_clim_mt_best_mod,
+  growth_var_mt2clim_best_mod = growth_var_mt_clim_best_mod,
   growth_var_mt2clim_best_mod_data = growth_var_mod_data_scaled ,
   
-  surv_mt2clim_best_mod = surv_clim_mt_best_mod,
-  growth_mt2clim_best_mod = growth_clim_mt_best_mod,
+  surv_mt2clim_best_mod = surv_mt_clim_best_mod,
+  growth_mt2clim_best_mod = growth_mt_clim_best_mod,
   repro_mt2clim_best_mod = repro_mt_clim_best_mod,
   nflrs_mt2clim_best_mod = nflrs_mt_clim_best_mod
 )

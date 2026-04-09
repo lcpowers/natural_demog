@@ -95,7 +95,7 @@ dredge_growth_var_clim <- dredge(growth_var_clim_mod, cluster = clust, fixed = c
            !(ann_snow_days & gs_snow_days))
 stopCluster(clust)
 
-growth_var_best_mod <- get.models(dredge_growth_var_clim, subset = 1)[[1]]
+growth_var_clim_best_mod <- get.models(dredge_growth_var_clim, subset = 1)[[1]]
 growth_var_clim_vars <- setdiff(rownames(summary(growth_var_best_mod)$coefficients), c("log_size_t0", "year2024", "year2025", "(Intercept)"))
 ```
 
@@ -106,7 +106,7 @@ clim_mods <- list(surv_clim_best_mod = surv_clim_best_mod,
                   growth_clim_best_mod = growth_clim_best_mod,
                   repro_clim_best_mod = repro_clim_best_mod,
                   nflrs_clim_best_mod = nflrs_clim_best_mod,
-                  growth_var_best_mod = growth_clim_best_mod,
+                  growth_var_best_mod = growth_var_clim_best_mod,
                   growth_var_mod_data_scaled = growth_var_mod_data_scaled)
 
 saveRDS(clim_mods,"r/modelFitResults/best_clim_mods_Apr9.RDS")
@@ -416,7 +416,7 @@ length(attr(terms(growth_var_mt_mod ), "term.labels"))
 
 clust <- makeCluster(40, type = "FORK")
 dredge_growth_var_mt <- dredge(growth_var_mt_mod, cluster = clust, m.lim = c(0,15),
-  fixed = c("log_size_t0", growth_var_clim_main), trace = 2)
+  fixed = c("log_size_t0", growth_var_clim_vars), trace = 2)
 stopCluster(clust)
 
 growth_var_mt_best_mod <- get.models(dredge_growth_var_mt, subset = 1)[[1]]
