@@ -85,7 +85,7 @@ nflrs_clim_best_mod <- get.models(dredge_nflrs_clim, subset = 1)[[1]]
 ```{r growth_var_clim_dredge}
 growth_var_mod_data_scaled <- growth_mod_data_scaled %>%
   mutate(growth_resid.sq = residuals(growth_clim_best_mod)^2)
-growth_var_clim_formula <- as.formula(paste(c("growth_resid.sq ~ log_size_t0*(year + site +", paste(clim_vars, collapse = " + "), ") + (1|site.pop)"), collapse = " "))
+growth_var_clim_formula <- as.formula(paste(c("growth_resid.sq ~ log_size_t0*(year + site + aspect.cat + ", paste(clim_vars, collapse = " + "), ") + (1|site.pop)"), collapse = " "))
 growth_var_clim_mod <- lmer(growth_var_clim_formula, data = growth_var_mod_data_scaled, REML = FALSE, na.action = na.fail)
 
 clust <- makeCluster(32, type = "FORK")
@@ -127,7 +127,7 @@ formula(growth_var_best_mod)
 # Microtopo variable winnowing: univariate R², correlation + VIF
 # --------------
 
-```{r mt_univariate_r2, fig.width = 9, fig.height = 6}
+```{r mt_univariate_r2}
 # Fit each microtopo variable as a lone predictor against each vital rate.
 # This gives the marginal variance explained by that variable on its own —
 # i.e., how much signal is there, ignoring all other predictors.
@@ -232,24 +232,12 @@ growth_var_clim_vars <- base::intersect(all.vars(formula(growth_var_best_mod)), 
 # survival
 survival_base <- surv_clim_best_mod
 base_AICc <- AICc(survival_base) %>% round(.,2)        
-
 for(mt_var in mt_vars){
   mod_new <- update( survival_base, as.formula(paste(". ~ . +", mt_var)))
   new_AICc <- AICc(mod_new) %>% round(.,2)                  
   cat(paste(c(mt_var,"new:",new_AICc,"base:",base_AICc,"\n")))
   cat(new_AICc - base_AICc,"\n")
 }
-# est_25 new: 3196.06 base: 3194.77
-# 1.29
-# nrt_25 new: 3192.62 base: 3194.77 # 2
-# -2.15
-# tpi_25 new: 3189.76 base: 3194.77 # 1
-# -5.01
-# tri_25 new: 3195.61 base: 3194.77
-# 0.84
-# plcv_25 new: 3196.52 base: 3194.77 # no
-# 1.75
-
 
 # growth
 growth_base <- growth_clim_best_mod
@@ -261,18 +249,6 @@ for(mt_var in mt_vars){
   cat(new_AICc - base_AICc,"\n")
 }
 
-# est_25 new: -147.46  base: -149.22 
-# 1.76
-# nrt_25 new: -147.51  base: -149.22 
-# 1.71
-# tpi_25 new: -150.4   base: -149.22 # 1
-# -1.81
-# tri_25 new: -148.29  base: -149.22
-# 0.93
-# plcv_25 new: -148.35 base: -149.22 
-# 0.87
-
-
 # nflr
 nflr_base <- nflrs_clim_best_mod
 base_AICc <- AICc(nflr_base) %>% round(.,2)        
@@ -282,16 +258,6 @@ for(mt_var in mt_vars){
   cat(paste(c(mt_var,"new:",new_AICc,"base:",base_AICc,"\n")))
   cat(new_AICc - base_AICc,"\n")
 }
-# est_25 new: 41577.78 base: 41575.81 
-# 1.97 
-# nrt_25 new: 41575.08 base: 41575.81 # 2
-# -0.73 
-# tpi_25 new: 41449.15 base: 41575.81 # 1
-# -126.66 
-# tri_25 new: 41577.77 base: 41575.81 
-# 1.96 
-# plcv_25 new: 41575.11 base: 41575.81 # 3
-# -0.7 
 
 # repro
 repro_base <- repro_clim_best_mod
@@ -303,28 +269,17 @@ for(mt_var in mt_vars){
   cat(new_AICc - base_AICc,"\n")
 }
 
-# est_25 new: 5960.19 base: 5958.64 
-# 1.55 
-# nrt_25 new: 5958.32 base: 5958.64 
-# -0.32 
-# tpi_25 new: 5959.59 base: 5958.64 
-# 0.95 
-# tri_25 new: 5958.64 base: 5958.64 
-# 0 
-# plcv_25 new: 5960.63 base: 5958.64 
-# 1.99 
-
 surv_mt_vars <- c("nrt_25", "tpi_25")
-growth_mt_vars <- c("tpi_25", "plcv_25")
-nflrs_mt_vars <- c("tpi_25", "nrt_25")
-repro_mt_vars <- c("nrt_25","tpi_25")
+growth_mt_vars <- c("tpi_25", "prcv_25")
+nflrs_mt_vars <- c("tpi_25", "tri_25")
+repro_mt_vars <- c("est_25","tpi_25")
 ```
 
 
 ```{r mt_global_models}
 
 surv_mt_formula <- as.formula(paste(
-  "surv ~ log_size_t0 * (year + site + ",
+  "surv ~ log_size_t0 * (year + site + aspect.cat + ",
   paste(c(surv_clim_vars, surv_mt_vars), collapse = " + "), ") + (",
   paste(surv_clim_vars, collapse = " + "), ") * (",
   paste(surv_mt_vars, collapse = " + "), ") + (1|site.pop)"
@@ -334,7 +289,7 @@ formula(surv_mt_mod)
 length(attr(terms(surv_mt_mod), "term.labels"))
 
 growth_mt_formula <- as.formula(paste(
-  "growth ~ log_size_t0 * (year + site + ",
+  "growth ~ log_size_t0 * (year + site + aspect.cat + ",
   paste(c(growth_clim_vars, growth_mt_vars), collapse = " + "), ") + (",
   paste(growth_clim_vars, collapse = " + "), ") * (",
   paste(growth_mt_vars, collapse = " + "), ") + (1|site.pop)"
@@ -344,7 +299,7 @@ formula(growth_mt_mod)
 length(attr(terms(growth_mt_mod), "term.labels"))
 
 repro_mt_formula <- as.formula(paste(
-  "flowered ~ log_size_t0 * (year + site + ",
+  "flowered ~ log_size_t0 * (year + site + aspect.cat + ",
   paste(c(repro_clim_vars, repro_mt_vars), collapse = " + "), ") + (",
   paste(repro_clim_vars, collapse = " + "), ") * (",
   paste(repro_mt_vars, collapse = " + "), ") + (1|site.pop)"
@@ -354,11 +309,12 @@ formula(repro_mt_formula)
 length(attr(terms(repro_mt_mod), "term.labels"))
 
 nflrs_mt_formula <- as.formula(paste(
-  "total_flrs ~ log_size_t0 * (year + site + ",
+  "total_flrs ~ log_size_t0 * (year + site + aspect.cat + ",
   paste(c(nflrs_clim_vars, nflrs_mt_vars), collapse = " + "), ") + (",
   paste(nflrs_clim_vars, collapse = " + "), ") * (",
   paste(nflrs_mt_vars, collapse = " + "), ") + (1|site.pop)"
 ))
+nflrs_mt_formula
 nflrs_mt_mod <- glmer(nflrs_mt_formula, family = poisson, data = nflrs_mod_data_scaled)
 formula(nflrs_mt_formula)
 length(attr(terms(nflrs_mt_mod), "term.labels"))
@@ -367,7 +323,7 @@ length(attr(terms(nflrs_mt_mod), "term.labels"))
 ```{r mt_dredge}
 # Note: do not name the cluster 'cl' — MuMIn uses cl <- match.call() internally,
 # which causes a name collision that silently breaks parallel dispatch.
-clust <- makeCluster(40, type = "FORK")
+clust <- makeCluster(50, type = "FORK")
 
 dredge_surv_mt <- dredge(surv_mt_mod, cluster = clust, m.lim = c(0,15),
   fixed = c("log_size_t0", "year", surv_clim_vars), trace = 2)
