@@ -43,7 +43,7 @@ gp_onepc <- filter(gp_size,!str_detect(A1,",")) %>%
   mutate(A1 = as.numeric(A1),
          A2 = as.numeric(A2),
          PM = as.numeric(PM),
-         area = (pi * (A1/2) + (A2/2))*(1-PM/100)  )
+         area = (pi * (A1/2) * (A2/2))*(1-PM/100))
 
 gp_mltplpcs <- filter(gp_size,str_detect(A1,",")) %>% 
   separate(A1,into = paste0("A1.",1:4),remove = F) %>% 
@@ -55,23 +55,23 @@ for(i in 1:nrow(gp_mltplpcs)){
   
   row.i <- gp_mltplpcs[i,]
   
-  long <- unlist(row.i[paste0("A1.", 1:4)]) %>% as.numeric() %>% na.omit()
-  perp <- unlist(row.i[paste0("A2.", 1:4)]) %>% as.numeric() %>% na.omit()
+  A1 <- unlist(row.i[paste0("A1.", 1:4)]) %>% as.numeric() %>% na.omit()
+  A2 <- unlist(row.i[paste0("A2.", 1:4)]) %>% as.numeric() %>% na.omit()
   pm   <- unlist(row.i[paste0("PM.", 1:4)]) %>% as.numeric() %>% na.omit()
   
-  if(length(long)!=length(perp)){
+  if(length(A1)!=length(A2)){
     
     cat("Missing pc size measurements for plant",row.i$id,"\n")
     
   }
   
-  if(length(pm)<=length(long)){
+  if(length(pm)<=length(A1)){
     
-    pm <- c(pm, rep(0, length(long) - length(pm)))
+    pm <- c(pm, rep(0, length(A1) - length(pm)))
     
   }
   
-  total_area <- sum(pi * (long / 2) * (perp / 2) * (1 - pm / 100), na.rm = TRUE)
+  total_area <- sum(pi * (A1 / 2) * (A2 / 2) * (1 - pm / 100), na.rm = TRUE)
   
   gp_mltplpcs2 <- rbind(gp_mltplpcs2, data.frame(
     pop = row.i$pop,
@@ -142,7 +142,7 @@ nr_onepc <- filter(nr_size,!str_detect(A1,",")) %>%
   mutate(A1 = as.numeric(A1),
          A2 = as.numeric(A2),
          PM = as.numeric(PM),
-         area = (pi * (A1/2) + (A2/2))*(1-PM/100)  )
+         area = (pi * (A1/2) * (A2/2))*(1-PM/100)  )
 
 nr_mltplpcs <- filter(nr_size,str_detect(A1,",")) %>% 
   separate(A1,into = paste0("A1.",1:3),remove = F) %>% 
@@ -154,23 +154,23 @@ for(i in 1:nrow(nr_mltplpcs)){
   
   row.i <- nr_mltplpcs[i,]
   
-  long <- unlist(row.i[paste0("A1.", 1:3)]) %>% as.numeric() %>% na.omit()
-  perp <- unlist(row.i[paste0("A2.", 1:3)]) %>% as.numeric() %>% na.omit()
+  A1 <- unlist(row.i[paste0("A1.", 1:3)]) %>% as.numeric() %>% na.omit()
+  A2 <- unlist(row.i[paste0("A2.", 1:3)]) %>% as.numeric() %>% na.omit()
   pm <- unlist(row.i[paste0("PM.", 1:3)]) %>% as.numeric() %>% na.omit()
 
-  if(length(long)!=length(perp)){
+  if(length(A1)!=length(A2)){
     
     cat("Missing pc size measurements for plant",row.i$plantID,"\n")
     
   }
   
-  if(length(pm)<=length(long)){
+  if(length(pm)<=length(A1)){
     
-    pm <- c(pm, rep(0, length(long) - length(pm)))
+    pm <- c(pm, rep(0, length(A1) - length(pm)))
     
   }
   
-  total_area <- sum(pi * (long / 2) * (perp / 2) * (1 - pm / 100), na.rm = TRUE)
+  total_area <- sum(pi * (A1 / 2) * (A2 / 2) * (1 - pm / 100), na.rm = TRUE)
   
   nr_mltplpcs2 <- rbind(nr_mltplpcs2, data.frame(
     pop = row.i$pop,
@@ -239,7 +239,7 @@ jp_onepc <- filter(jp_size,!str_detect(A1,",")) %>%
   mutate(A1 = as.numeric(A1),
          A2 = as.numeric(A2),
          PM = as.numeric(PM),
-         area = (pi * (A1/2) + (A2/2))*(1-PM/100)  )
+         area = (pi * (A1/2) * (A2/2))*(1-PM/100)  )
 
 jp_mltplpcs <- filter(jp_size,str_detect(A1,",")) %>% 
   separate(A1,into = paste0("A1.",1:3),remove = F) %>% 
@@ -251,23 +251,23 @@ for(i in 1:nrow(jp_mltplpcs)){
   
   row.i <- jp_mltplpcs[i,]
   
-  long <- unlist(row.i[paste0("A1.", 1:3)]) %>% as.numeric() %>% na.omit()
-  perp <- unlist(row.i[paste0("A2.", 1:3)]) %>% as.numeric() %>% na.omit()
+  A1 <- unlist(row.i[paste0("A1.", 1:3)]) %>% as.numeric() %>% na.omit()
+  A2 <- unlist(row.i[paste0("A2.", 1:3)]) %>% as.numeric() %>% na.omit()
   pm <- unlist(row.i[paste0("PM.", 1:3)]) %>% as.numeric() %>% na.omit()
 
-  if(length(long)!=length(perp)){
+  if(length(A1)!=length(A2)){
     
     cat("Missing pc size measurements for plant",row.i$plantID,"\n")
     
   }
   
-  if(length(pm)<=length(long)){
+  if(length(pm)<=length(A1)){
     
-    pm <- c(pm, rep(0, length(long) - length(pm)))
+    pm <- c(pm, rep(0, length(A1) - length(pm)))
     
   }
   
-  total_area <- sum(pi * (long / 2) * (perp / 2) * (1 - pm / 100), na.rm = TRUE)
+  total_area <- sum(pi * (A1 / 2) * (A2 / 2) * (1 - pm / 100), na.rm = TRUE)
   
   jp_mltplpcs2 <- rbind(jp_mltplpcs2, data.frame(
     pop = row.i$pop,
@@ -282,7 +282,7 @@ for(i in 1:nrow(jp_mltplpcs)){
     year = row.i$year,
     area = total_area
   ))
-  rm(long,perp,pm,total_area)
+  rm(A1,A2,pm,total_area)
 }
 
 jp_all_sizes <- rbind(jp_onepc,jp_mltplpcs2) %>%
