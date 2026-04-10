@@ -9,7 +9,7 @@ knitr::opts_chunk$set(echo = TRUE)
 ```
 
 ```{r}
-# rm(list=ls())
+rm(list=ls())
 library(tidyverse)
 library(lme4)
 library(MuMIn)
@@ -109,12 +109,12 @@ clim_mods <- list(surv_clim_best_mod = surv_clim_best_mod,
                   growth_var_best_mod = growth_var_clim_best_mod,
                   growth_var_mod_data_scaled = growth_var_mod_data_scaled)
 
-saveRDS(clim_mods,"r/modelFitResults/best_clim_mods_Apr9.RDS")
+saveRDS(clim_mods,paste0("r/modelFitResults/best_clim_mods_",Sys.Date(),".RDS"))
 ```
 
 
 ```{r read_clim_models}
-clim_mods <- readRDS("r/modelFitResults/best_clim_mods_Apr9.RDS") %>% list2env(envir = .GlobalEnv)
+# clim_mods <- readRDS("r/modelFitResults/best_clim_mods_Apr9.RDS") %>% list2env(envir = .GlobalEnv)
 
 formula(surv_clim_best_mod)
 formula(growth_clim_best_mod)
@@ -230,7 +230,7 @@ growth_var_clim_vars <- base::intersect(all.vars(formula(growth_var_best_mod)), 
 ```{r test_mt_vars}
 
 # survival
-survival_base <- surv_clim_best_mod
+survival_base <- update(surv_clim_best_mod,nAGQ=0)
 base_AICc <- AICc(survival_base) %>% round(.,2)        
 for(mt_var in mt_vars){
   mod_new <- update( survival_base, as.formula(paste(". ~ . +", mt_var)))
@@ -250,7 +250,7 @@ for(mt_var in mt_vars){
 }
 
 # nflr
-nflr_base <- nflrs_clim_best_mod
+nflr_base <- update(nflrs_clim_best_mod,nAGQ=0)
 base_AICc <- AICc(nflr_base) %>% round(.,2)        
 for(mt_var in mt_vars){
   mod_new <- update(nflr_base, as.formula(paste(". ~ . +", mt_var)))
@@ -260,7 +260,7 @@ for(mt_var in mt_vars){
 }
 
 # repro
-repro_base <- repro_clim_best_mod
+repro_base <- update(repro_clim_best_mod,nAGQ=0)
 base_AICc <- AICc(repro_base) %>% round(.,2)        
 for(mt_var in mt_vars){
   mod_new <- update(repro_base, as.formula(paste(". ~ . +", mt_var)))
@@ -279,7 +279,7 @@ repro_mt_vars <- c("est_25","tpi_25")
 ```{r mt_global_models}
 
 surv_mt_formula <- as.formula(paste(
-  "surv ~ log_size_t0 * (year + site + aspect.cat + ",
+  "surv ~ log_size_t0 * (year + site + aspect.cat +",
   paste(c(surv_clim_vars, surv_mt_vars), collapse = " + "), ") + (",
   paste(surv_clim_vars, collapse = " + "), ") * (",
   paste(surv_mt_vars, collapse = " + "), ") + (1|site.pop)"
@@ -289,7 +289,7 @@ formula(surv_mt_mod)
 length(attr(terms(surv_mt_mod), "term.labels"))
 
 growth_mt_formula <- as.formula(paste(
-  "growth ~ log_size_t0 * (year + site + aspect.cat + ",
+  "growth ~ log_size_t0 * (year + site + aspect.cat +",
   paste(c(growth_clim_vars, growth_mt_vars), collapse = " + "), ") + (",
   paste(growth_clim_vars, collapse = " + "), ") * (",
   paste(growth_mt_vars, collapse = " + "), ") + (1|site.pop)"
@@ -323,10 +323,10 @@ length(attr(terms(nflrs_mt_mod), "term.labels"))
 ```{r mt_dredge}
 # Note: do not name the cluster 'cl' — MuMIn uses cl <- match.call() internally,
 # which causes a name collision that silently breaks parallel dispatch.
-clust <- makeCluster(50, type = "FORK")
+clust <- makeCluster(40, type = "FORK")
 
 dredge_surv_mt <- dredge(surv_mt_mod, cluster = clust, m.lim = c(0,15),
-  fixed = c("log_size_t0", "year", surv_clim_vars), trace = 2)
+  fixed = c("log_size_t0", surv_clim_vars), trace = 2)
 
 dredge_growth_mt <- dredge(growth_mt_mod, cluster = clust, m.lim = c(0,15),
   fixed = c("log_size_t0", growth_clim_vars), trace = 2)

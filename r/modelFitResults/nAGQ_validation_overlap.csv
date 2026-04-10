@@ -1,0 +1,4 @@
+vital_rate,top_model_match,overlap_top10
+survival,TRUE,10
+repro,TRUE,10
+nflrs,TRUE,10

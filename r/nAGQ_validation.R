@@ -46,7 +46,7 @@ dredge_subset <- quote(
   !(ann_snow_days & gs_snow_days)
 )
 
-clust <- makeCluster(8, type = "FORK")
+clust <- makeCluster(20, type = "FORK")
 
 t_surv_0 <- system.time(d_surv_0  <- dredge(surv_0,  cluster = clust, fixed = "log_size_t0", subset = dredge_subset, trace = 2))
 t_surv_1 <- system.time(d_surv_1  <- dredge(surv_1,  cluster = clust, fixed = "log_size_t0", subset = dredge_subset, trace = 2))
