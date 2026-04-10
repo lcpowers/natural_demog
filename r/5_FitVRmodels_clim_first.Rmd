@@ -96,7 +96,7 @@ dredge_growth_var_clim <- dredge(growth_var_clim_mod, cluster = clust, fixed = c
 stopCluster(clust)
 
 growth_var_clim_best_mod <- get.models(dredge_growth_var_clim, subset = 1)[[1]]
-growth_var_clim_vars <- setdiff(rownames(summary(growth_var_best_mod)$coefficients), c("log_size_t0", "year2024", "year2025", "(Intercept)"))
+growth_var_clim_vars <- setdiff(rownames(summary(growth_var_clim_best_mod)$coefficients), c("log_size_t0", "year2024", "year2025", "(Intercept)"))
 ```
 
 # save best clim models
@@ -120,7 +120,7 @@ formula(surv_clim_best_mod)
 formula(growth_clim_best_mod)
 formula(repro_clim_best_mod)
 formula(nflrs_clim_best_mod)
-formula(growth_var_best_mod)
+formula(growth_var_clim_best_mod)
 ```
 
 # --------------
@@ -217,7 +217,7 @@ surv_clim_vars <- base::intersect(all.vars(formula(surv_clim_best_mod)), clim_va
 growth_clim_vars <- base::intersect(all.vars(formula(growth_clim_best_mod)), clim_vars)
 repro_clim_vars <- base::intersect(all.vars(formula(repro_clim_best_mod)), clim_vars)
 nflrs_clim_vars <- base::intersect(all.vars(formula(nflrs_clim_best_mod)), clim_vars)
-growth_var_clim_vars <- base::intersect(all.vars(formula(growth_var_best_mod)), clim_vars)
+growth_var_clim_vars <- base::intersect(all.vars(formula(growth_var_clim_best_mod)), clim_vars)
 
 # Formula: log_size_t0 * (year + site + aspect.cat + clim + mt) + (clim) * (mt) + (1|site.pop)
 # Fixed in dredge: log_size_t0 and clim main effects.
@@ -274,7 +274,6 @@ growth_mt_vars <- c("tpi_25", "prcv_25")
 nflrs_mt_vars <- c("tpi_25", "tri_25")
 repro_mt_vars <- c("est_25","tpi_25")
 ```
-
 
 ```{r mt_global_models}
 
@@ -358,8 +357,8 @@ summary(lm(growth_resid.sq.mt ~ tri_25,data=growth_var_mod_data_scaled))$r.squar
 summary(lm(growth_resid.sq.mt ~ plcv_25,data=growth_var_mod_data_scaled))$r.squared
 summary(lm(growth_resid.sq.mt ~ prcv_25,data=growth_var_mod_data_scaled))$r.squared
 
-growth_var_clim_vars <- intersect(all.vars(formula(growth_var_best_mod)), clim_vars)
-growth_var_mt_vars <- c("est_25","tpi_25")
+growth_var_clim_vars <- intersect(all.vars(formula(growth_var_clim_best_mod)), clim_vars)
+growth_var_mt_vars <- c("tri_25","tpi_25")
 
 growth_var_mt_formula <- as.formula(paste(
   "growth_resid.sq.mt ~ log_size_t0 * (year + site + aspect.cat + ",
@@ -401,7 +400,7 @@ clim_then_mt_model_list <- list(
   repro_clim2mt_best_mod = repro_mt_best_mod,
   nflrs_clim2mt_best_mod = nflrs_mt_best_mod
 )
-saveRDS(clim_then_mt_model_list,"r/modelFitResults/best_clim_then_mt_mods_Apr9.RDS")
+saveRDS(clim_then_mt_model_list,paste0("r/modelFitResults/best_clim_then_mt_mods_",Sys.Date(),".RDS"))
 ```
 
 
