@@ -77,15 +77,28 @@ nflrs_mod_data_scaled <- repro_mod_data %>%
 mod_data <- list(
   surv_mod_data = surv_mod_data,
   surv_mod_data_scaled = surv_mod_data_scaled,
-  
+
   growth_mod_data = growth_mod_data,
   growth_mod_data_scaled = growth_mod_data_scaled,
-  
+
   repro_mod_data = repro_mod_data,
   repro_mod_data_scaled = repro_mod_data_scaled,
-  
+
   nflrs_mod_data_scaled = nflrs_mod_data_scaled
 )
 
 saveRDS(mod_data, "data/demog/vr_modData/mod_data.rds")
+```
+
+```{r save_scale_params}
+# Scale parameters for ipm_functions.R — derived from growth data (largest dataset).
+# Used to transform raw predictor values before passing to models fit on scaled data.
+all_num_vars <- c("log_size_t0", clim_vars, mt_vars, pop_topo_vars)
+vars_present <- all_num_vars[all_num_vars %in% names(growth_mod_data)]
+scale_params <- data.frame(
+  var    = vars_present,
+  center = sapply(vars_present, function(v) mean(growth_mod_data[[v]], na.rm = TRUE)),
+  scale  = sapply(vars_present, function(v) sd(growth_mod_data[[v]],   na.rm = TRUE))
+)
+write_csv(scale_params, "data/demog/vr_modData/scale_params.csv")
 ```
