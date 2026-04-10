@@ -64,7 +64,7 @@ summary(nflrs_mt_mod)
 ```{r mt_dredge}
 # Note: must not name the cluster 'cl' — MuMIn uses cl <- match.call() internally,
 # which causes a name collision that silently breaks parallel dispatch.
-clust <- makeCluster(32, type = "FORK")
+clust <- makeCluster(30, type = "FORK")
 
 dredge_surv_mt <- dredge(surv_mt_mod, cluster = clust, fixed = c("log_size_t0"), trace = 2, # m.lim = c(0,15),
   subset = (est_25 + nrt_25 + tpi_25 + tri_25 + plcv_25) <= 3)
@@ -120,7 +120,7 @@ mt_mods <- list(surv_mt_best_mod = surv_mt_best_mod,
                   growth_var_mt_best_mod = growth_var_mt_best_mod,
                   growth_var_mt_mod_data_scaled = growth_var_mod_data_scaled)
 
-saveRDS(mt_mods,"r/modelFitResults/best_mt_mods_Apr9.RDS")
+saveRDS(mt_mods,paste0("r/modelFitResults/best_mt_mods_",Sys.Date(),".RDS"))
 ```
 
 
@@ -133,7 +133,7 @@ formula(repro_mt_best_mod)
 formula(nflrs_mt_best_mod)
 formula(growth_var_mt_best_mod)
 
-clim_mods <- readRDS("r/modelFitResults/best_clim_mods_Apr9.RDS") %>% list2env(envir = .GlobalEnv)
+# clim_mods <- readRDS("r/modelFitResults/best_clim_mods_Apr9.RDS") %>% list2env(envir = .GlobalEnv)
 ```
 
 # --------------
@@ -216,7 +216,7 @@ corr_plot <- clim %>%
 ```{r test_clim_vars}
 
 # survival
-survival_base <- surv_mt_best_mod
+survival_base <- update(surv_mt_best_mod,nAGQ=0)
 base_AICc <- AICc(survival_base)
 
 for(clim_var in clim_vars){
@@ -265,9 +265,8 @@ for(clim_var in clim_vars){
 # -0.12 
 
 # nflr
-nflr_base <- nflrs_mt_best_mod
+nflr_base <- update(nflrs_mt_best_mod,nAGQ=0)
 base_AICc <- AICc(nflr_base)
-
 for(clim_var in clim_vars){
   mod_new <- update(nflr_base, as.formula(paste(". ~ . +", clim_var)))
   AICc(mod_new)                   
@@ -288,7 +287,7 @@ for(clim_var in clim_vars){
 # 10.37 
 
 # repro
-repro_base <- repro_mt_best_mod
+repro_base <- update(repro_mt_best_mod,nAGQ=0)
 base_AICc <- AICc(repro_base)
 
 for(clim_var in clim_vars){
@@ -311,10 +310,10 @@ for(clim_var in clim_vars){
 # gs_meanT_range new: 5996.16 base: 5995.08 
 # -1.08 
 
-surv_clim_vars <- c("gs_meanT_range","gs_meanT_mean")
-nflrs_clim_vars <- c("gs_meanT_mean","gs_snow_days")
+surv_clim_vars <- c("gs_meanT_range","gs_meanT_mean","gs_snow_days")
 growth_clim_vars <- c("gs_meanT_mean","gs_snow_days")
-repro_clim_vars <- c("gs_meanT_mean","gs_snow_days")
+nflrs_clim_vars <- c("gs_meanT_mean","gs_snow_days","win_meanT_range")
+repro_clim_vars <- c("gs_meanT_mean","gs_snow_days","win_meanT_range")
 ```
 
 
@@ -387,10 +386,10 @@ stopCluster(clust)
 ```
 
 ```{r mt_clim_model_selection}
-surv_mt_clim_best_mod   <- update(get.models(dredge_surv_mt_clim,   subset = )[[1]], nAGQ = 1)
-growth_mt_clim_best_mod <- get.models(dredge_growth_mt_clim, subset = )[[1]]
-repro_mt_clim_best_mod  <- update(get.models(dredge_repro_mt_clim,  subset = )[[1]], nAGQ = 1)
-nflrs_mt_clim_best_mod  <- update(get.models(dredge_nflrs_mt_clim,  subset = )[[1]], nAGQ = 1)
+# surv_mt_clim_best_mod   <- update(get.models(dredge_surv_mt_clim,   subset = )[[1]], nAGQ = 1)
+# growth_mt_clim_best_mod <- get.models(dredge_growth_mt_clim, subset = )[[1]]
+# repro_mt_clim_best_mod  <- update(get.models(dredge_repro_mt_clim,  subset = )[[1]], nAGQ = 1)
+# nflrs_mt_clim_best_mod  <- update(get.models(dredge_nflrs_mt_clim,  subset = )[[1]], nAGQ = 1)
 ```
 
 ```{r growth_var_mt_clim_dredge}
