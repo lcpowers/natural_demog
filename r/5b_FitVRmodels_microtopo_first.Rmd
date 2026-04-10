@@ -45,7 +45,7 @@ nflrs_mod_data_scaled$site <- relevel(as.factor(nflrs_mod_data_scaled$site), ref
 
 ```{r vr_global_models}
 surv_mt_formula <- as.formula(paste(c("surv ~ log_size_t0*(year + site + aspect.cat + ", paste(mt_mod_vars, collapse = " + "), ") + (1|site.pop)"), collapse = " "))
-surv_mt_mod <- glmer(formula = surv_mt_formula, family = "binomial", data = surv_mod_data_scaled)
+surv_mt_mod <- glmer(formula = surv_mt_formula, family = "binomial", data = surv_mod_data_scaled, nAGQ = 0)
 summary(surv_mt_mod)
 
 growth_mt_formula <- as.formula(paste(c("growth ~ log_size_t0*(year + site + aspect.cat + ", paste(mt_mod_vars, collapse = " + "), ") + (1|site.pop)"), collapse = " "))
@@ -53,11 +53,11 @@ growth_mt_mod <- lmer(formula = growth_mt_formula, data = growth_mod_data_scaled
 summary(growth_mt_mod)
 
 repro_mt_formula <- as.formula(paste(c("flowered ~ log_size_t0*(year + site + aspect.cat + ", paste(mt_mod_vars, collapse = " + "), ") + (1|site.pop)"), collapse = " "))
-repro_mt_mod <- glmer(repro_mt_formula, data = repro_mod_data_scaled, family = binomial)
+repro_mt_mod <- glmer(repro_mt_formula, data = repro_mod_data_scaled, family = binomial, nAGQ = 0)
 summary(repro_mt_mod)
 
 nflrs_mt_formula <- as.formula(paste(c("total_flrs ~ log_size_t0*(year + site + aspect.cat + ", paste(mt_mod_vars, collapse = " + "), ") + (1|site.pop)"), collapse = " "))
-nflrs_mt_mod <- glmer(nflrs_mt_formula, data = nflrs_mod_data_scaled, family = poisson)
+nflrs_mt_mod <- glmer(nflrs_mt_formula, data = nflrs_mod_data_scaled, family = poisson, nAGQ = 0)
 summary(nflrs_mt_mod)
 ```
 
@@ -82,16 +82,16 @@ stopCluster(clust)
 ```
 
 ```{r mt_model_selection}
-surv_mt_best_mod <- get.models(dredge_surv_mt, subset = 1)[[1]]
+surv_mt_best_mod <- update(get.models(dredge_surv_mt, subset = 1)[[1]], nAGQ = 1)
 surv_mt_vars <- intersect(rownames(summary(surv_mt_best_mod)$coefficients), mt_mod_vars)
 
 growth_mt_best_mod <- get.models(dredge_growth_mt, subset = 1)[[1]]
 growth_mt_vars <- intersect(rownames(summary(growth_mt_best_mod)$coefficients), mt_mod_vars)
 
-repro_mt_best_mod <- get.models(dredge_repro_mt, subset = 1)[[1]]
+repro_mt_best_mod <- update(get.models(dredge_repro_mt, subset = 1)[[1]], nAGQ = 1)
 repro_mt_vars <- intersect(rownames(summary(repro_mt_best_mod)$coefficients), mt_mod_vars)
 
-nflrs_mt_best_mod <- get.models(dredge_nflrs_mt, subset = 1)[[1]]
+nflrs_mt_best_mod <- update(get.models(dredge_nflrs_mt, subset = 1)[[1]], nAGQ = 1)
 nflrs_mt_vars <- intersect(rownames(summary(nflrs_mt_best_mod)$coefficients), mt_mod_vars)
 ```
 
@@ -330,7 +330,7 @@ surv_mt_clim_formula <- as.formula(paste(
   paste(surv_mt_vars, collapse = " + "), ") * (",
   paste(surv_clim_vars, collapse = " + "), ") + (1|site.pop)"
 ))
-surv_mt_clim_mod <- glmer(surv_mt_clim_formula, family = binomial, data = surv_mod_data_scaled)
+surv_mt_clim_mod <- glmer(surv_mt_clim_formula, family = binomial, data = surv_mod_data_scaled, nAGQ = 0)
 formula(surv_mt_clim_mod)
 length(attr(terms(surv_mt_clim_mod), "term.labels"))
 
@@ -350,7 +350,7 @@ repro_mt_clim_formula <- as.formula(paste(
   paste(repro_mt_vars, collapse = " + "), ") * (",
   paste(repro_clim_vars, collapse = " + "), ") + (1|site.pop)"
 ))
-repro_mt_clim_mod <- glmer(repro_mt_clim_formula, family = binomial, data = repro_mod_data_scaled)
+repro_mt_clim_mod <- glmer(repro_mt_clim_formula, family = binomial, data = repro_mod_data_scaled, nAGQ = 0)
 formula(repro_mt_clim_mod)
 length(attr(terms(repro_mt_clim_mod), "term.labels"))
 
@@ -360,7 +360,7 @@ nflrs_mt_clim_formula <- as.formula(paste(
   paste(nflrs_mt_vars, collapse = " + "), ") * (",
   paste(nflrs_clim_vars, collapse = " + "), ") + (1|site.pop)"
 ))
-nflrs_mt_clim_mod <- glmer(nflrs_mt_clim_formula, family = poisson, data = nflrs_mod_data_scaled)
+nflrs_mt_clim_mod <- glmer(nflrs_mt_clim_formula, family = poisson, data = nflrs_mod_data_scaled, nAGQ = 0)
 formula(nflrs_mt_clim_mod)
 length(attr(terms(nflrs_mt_clim_mod), "term.labels"))
 ```
@@ -387,10 +387,10 @@ stopCluster(clust)
 ```
 
 ```{r mt_clim_model_selection}
-surv_mt_clim_best_mod   <- get.models(dredge_surv_mt_clim,   subset = )[[1]]
+surv_mt_clim_best_mod   <- update(get.models(dredge_surv_mt_clim,   subset = )[[1]], nAGQ = 1)
 growth_mt_clim_best_mod <- get.models(dredge_growth_mt_clim, subset = )[[1]]
-repro_mt_clim_best_mod  <- get.models(dredge_repro_mt_clim,  subset = )[[1]]
-nflrs_mt_clim_best_mod  <- get.models(dredge_nflrs_mt_clim,  subset = )[[1]]
+repro_mt_clim_best_mod  <- update(get.models(dredge_repro_mt_clim,  subset = )[[1]], nAGQ = 1)
+nflrs_mt_clim_best_mod  <- update(get.models(dredge_nflrs_mt_clim,  subset = )[[1]], nAGQ = 1)
 ```
 
 ```{r growth_var_mt_clim_dredge}
