@@ -343,7 +343,7 @@ stopCluster(clust)
 surv_mt_best_mod <- update(get.models(dredge_surv_mt, subset = 1)[[1]], nAGQ = 1)
 growth_mt_best_mod <- get.models(dredge_growth_mt, subset = 1)[[1]]
 repro_mt_best_mod <- update(get.models(dredge_repro_mt, subset = 1)[[1]], nAGQ = 1)
-nflrs_mt_best_mod <- update(get.models(dredge_nflrs_mt, subset = 1)[[1]], nAGQ = 1)
+nflrs_mt_best_mod <- update(get.models(dredge_nflrs_mt, subset = 2)[[1]], nAGQ = 1)
 ```
 
 ```{r growth_var_mt_dredge}
@@ -370,11 +370,11 @@ growth_var_mt_mod <- lmer(growth_var_mt_formula, data = growth_var_mod_data_scal
 length(attr(terms(growth_var_mt_mod ), "term.labels"))
 
 clust <- makeCluster(40, type = "FORK")
-dredge_growth_var_mt <- dredge(growth_var_mt_mod, cluster = clust, m.lim = c(0,15),
+dredge_growth_var_mt <- dredge(growth_var_mt_mod, cluster = clust, #m.lim = c(0,15),
   fixed = c("log_size_t0", growth_var_clim_vars), trace = 2)
 stopCluster(clust)
 
-growth_var_mt_best_mod <- get.models(dredge_growth_var_mt, subset = 1)[[1]]
+growth_var_mt_best_mod <- get.models(dredge_growth_var_mt, subset = 3)[[1]]
 ```
 
 Save all of the models

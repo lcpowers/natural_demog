@@ -370,16 +370,16 @@ length(attr(terms(nflrs_mt_clim_mod), "term.labels"))
 clust <- makeCluster(32, type = "FORK")
 
 # MT main effects are fixed; climate terms are dredgeable.
-dredge_surv_mt_clim <- dredge(surv_mt_clim_mod, cluster = clust, m.lim = c(0,15),
+dredge_surv_mt_clim <- dredge(surv_mt_clim_mod, cluster = clust, # m.lim = c(0,15),
   fixed = c("log_size_t0", surv_mt_vars), trace = 2)
 
-dredge_growth_mt_clim <- dredge(growth_mt_clim_mod, cluster = clust, m.lim = c(0,15),
+dredge_growth_mt_clim <- dredge(growth_mt_clim_mod, cluster = clust, # m.lim = c(0,15),
   fixed = c("log_size_t0", growth_mt_vars), subset = !(ann_snow_days & gs_snow_days), trace = 2)
 
-dredge_repro_mt_clim <- dredge(repro_mt_clim_mod, cluster = clust, m.lim = c(0,15),
+dredge_repro_mt_clim <- dredge(repro_mt_clim_mod, cluster = clust, # m.lim = c(0,15),
   fixed = c("log_size_t0", repro_mt_vars), trace = 2)
 
-dredge_nflrs_mt_clim <- dredge(nflrs_mt_clim_mod, cluster = clust, m.lim = c(0,15),
+dredge_nflrs_mt_clim <- dredge(nflrs_mt_clim_mod, cluster = clust, # m.lim = c(0,15),
   fixed = c("log_size_t0", nflrs_mt_vars), trace = 2)
 
 stopCluster(clust)
