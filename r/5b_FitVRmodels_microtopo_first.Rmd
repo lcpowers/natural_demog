@@ -125,7 +125,7 @@ saveRDS(mt_mods,paste0("r/modelFitResults/best_mt_mods_",Sys.Date(),".RDS"))
 
 
 ```{r read_mt_models}
-mt_mods <- readRDS("r/modelFitResults/best_mt_mods_Apr9.RDS") %>% list2env(envir = .GlobalEnv)
+# mt_mods <- readRDS("r/modelFitResults/best_mt_mods_Apr9.RDS") %>% list2env(envir = .GlobalEnv)
 
 formula(surv_mt_best_mod)
 formula(growth_mt_best_mod)
