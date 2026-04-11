@@ -43,17 +43,17 @@ nflrs_mod_data_scaled$site <- relevel(as.factor(nflrs_mod_data_scaled$site), ref
 # Fit and dredge global models
 
 ```{r vr_global_models}
-surv_clim_formula <- as.formula(paste(c("surv ~ log_size_t0*(year + site + aspect.cat + ", paste(clim_vars, collapse = " + "), ") + (1|site.pop)"), collapse = " "))
+surv_clim_formula <- as.formula(paste(c("surv ~ log_size_t0*(year + site + aspect.cat + ", paste(clim_vars, collapse = " + "), ") + site*aspect.cat + (1|site.pop)"), collapse = " "))
 surv_clim_mod <- glmer(formula = surv_clim_formula, family = "binomial", data = surv_mod_data_scaled,nAGQ=0)
 summary(surv_clim_mod)
 
-growth_clim_formula <- as.formula(paste(c("growth ~ log_size_t0*(year + site + aspect.cat + ", paste(clim_vars, collapse = " + "), ") + (1|site.pop)"), collapse = " "))
+growth_clim_formula <- as.formula(paste(c("growth ~ log_size_t0*(year + site + aspect.cat + ", paste(clim_vars, collapse = " + "), ") + site*aspect.cat + (1|site.pop)"), collapse = " "))
 growth_clim_mod <- lmer(formula = growth_clim_formula, data = growth_mod_data_scaled, REML = F)
 
-repro_clim_formula <- as.formula(paste(c("flowered ~ log_size_t0*(year + site + aspect.cat + ", paste(clim_vars, collapse = " + "), ") + (1|site.pop)"), collapse = " "))
+repro_clim_formula <- as.formula(paste(c("flowered ~ log_size_t0*(year + site + aspect.cat + ", paste(clim_vars, collapse = " + "), ") + site*aspect.cat + (1|site.pop)"), collapse = " "))
 repro_clim_mod <- glmer(repro_clim_formula, data = repro_mod_data_scaled, family = binomial, nAGQ=0)
 
-nflrs_clim_formula <- as.formula(paste(c("total_flrs ~ log_size_t0*(year + site + aspect.cat + ", paste(clim_vars, collapse = " + "), ") + (1|site.pop)"), collapse = " "))
+nflrs_clim_formula <- as.formula(paste(c("total_flrs ~ log_size_t0*(year + site + aspect.cat + ", paste(clim_vars, collapse = " + "), ") + site*aspect.cat + (1|site.pop)"), collapse = " "))
 nflrs_clim_mod <- glmer(nflrs_clim_formula, data = nflrs_mod_data_scaled, family = poisson, nAGQ=0)
 ```
 
@@ -89,7 +89,7 @@ stopCluster(clust)
 surv_clim_best_mod <- update(get.models(dredge_surv_clim, subset = 1)[[1]], nAGQ = 1)
 growth_clim_best_mod <- get.models(dredge_growth_clim, subset = 1)[[1]]
 repro_clim_best_mod <- update(get.models(dredge_repro_clim, subset = 1)[[1]], nAGQ = 1)
-nflrs_clim_best_mod <- get.models(dredge_nflrs_clim, subset = 1, nAGQ = 1)[[1]]
+nflrs_clim_best_mod <- get.models(dredge_nflrs_clim, subset = 1, nAGQ = 2)[[1]]
 performance::r2(nflrs_clim_best_mod)
 ```
 
@@ -289,7 +289,7 @@ repro_mt_vars <- c("tri_25","prcv_25")
 ```{r mt_global_models}
 
 surv_mt_formula <- as.formula(paste(
-  "surv ~ log_size_t0 * (year + site + aspect.cat +",
+  "surv ~ log_size_t0 * (year + site*aspect.cat +",
   paste(c(surv_clim_vars, surv_mt_vars), collapse = " + "), ") + (",
   paste(surv_clim_vars, collapse = " + "), ") * (",
   paste(surv_mt_vars, collapse = " + "), ") + (1|site.pop)"
@@ -335,16 +335,16 @@ length(attr(terms(nflrs_mt_mod), "term.labels"))
 # which causes a name collision that silently breaks parallel dispatch.
 clust <- makeCluster(40, type = "FORK")
 
-dredge_surv_mt <- dredge(surv_mt_mod, cluster = clust, m.lim = c(0,20),
+dredge_surv_mt <- dredge(surv_mt_mod, cluster = clust, # m.lim = c(0,20),
   fixed = c("log_size_t0", surv_clim_vars), trace = 2)
 
-dredge_growth_mt <- dredge(growth_mt_mod, cluster = clust, m.lim = c(0,20),
+dredge_growth_mt <- dredge(growth_mt_mod, cluster = clust, # m.lim = c(0,20),
   fixed = c("log_size_t0", growth_clim_vars), trace = 2)
 
-dredge_repro_mt <- dredge(repro_mt_mod, cluster = clust, m.lim = c(0,20),
+dredge_repro_mt <- dredge(repro_mt_mod, cluster = clust, # m.lim = c(0,20),
   fixed = c("log_size_t0", repro_clim_vars), trace = 2)
 
-dredge_nflrs_mt <- dredge(nflrs_mt_mod, cluster = clust, m.lim = c(0,20),
+dredge_nflrs_mt <- dredge(nflrs_mt_mod, cluster = clust, # m.lim = c(0,20),
   fixed = c("log_size_t0", nflrs_clim_vars), trace = 2)
 
 stopCluster(clust)
@@ -353,8 +353,9 @@ stopCluster(clust)
 ```{r mt_model_selection}
 surv_mt_best_mod <- update(get.models(dredge_surv_mt, subset = 1)[[1]], nAGQ = 1)
 growth_mt_best_mod <- get.models(dredge_growth_mt, subset = 1)[[1]]
-repro_mt_best_mod <- update(get.models(dredge_repro_mt, subset = 1)[[1]], nAGQ = 1)
+repro_mt_best_mod <- update(get.models(dredge_repro_mt, subset = 2)[[1]], nAGQ = 1)
 nflrs_mt_best_mod <- get.models(dredge_nflrs_mt, subset = 2)[[1]]
+performance::r2(nflrs_mt_best_mod)
 ```
 
 ```{r growth_var_mt_dredge}
@@ -385,7 +386,7 @@ dredge_growth_var_mt <- dredge(growth_var_mt_mod, cluster = clust, #m.lim = c(0,
   fixed = c("log_size_t0", growth_var_clim_vars), trace = 2)
 stopCluster(clust)
 
-growth_var_mt_best_mod <- get.models(dredge_growth_var_mt, subset = 3)[[1]]
+growth_var_mt_best_mod <- get.models(dredge_growth_var_mt, subset = 2)[[1]]
 ```
 
 Save all of the models
@@ -411,7 +412,7 @@ clim_then_mt_model_list <- list(
   repro_clim2mt_best_mod = repro_mt_best_mod,
   nflrs_clim2mt_best_mod = nflrs_mt_best_mod
 )
-saveRDS(clim_then_mt_model_list,paste0("r/modelFitResults/best_clim_then_mt_mods_",Sys.Date(),".RDS"))
+saveRDS(clim_then_mt_model_list,paste0("r/modelFitResults/best_clim2mt_mods_",Sys.Date(),".RDS"))
 ```
 
 
