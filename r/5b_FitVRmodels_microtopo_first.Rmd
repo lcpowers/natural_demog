@@ -17,6 +17,7 @@ library(car)
 library(parallel)
 library(patchwork)
 library(corrplot)
+library(glmmTMB)
 
 options(na.action = "na.fail")
 
@@ -57,7 +58,7 @@ repro_mt_mod <- glmer(repro_mt_formula, data = repro_mod_data_scaled, family = b
 summary(repro_mt_mod)
 
 nflrs_mt_formula <- as.formula(paste(c("total_flrs ~ log_size_t0*(year + site + aspect.cat + ", paste(mt_mod_vars, collapse = " + "), ") + (1|site.pop)"), collapse = " "))
-nflrs_mt_mod <- glmer(nflrs_mt_formula, data = nflrs_mod_data_scaled, family = poisson, nAGQ = 0)
+nflrs_mt_mod <- glmmTMB(nflrs_mt_formula, data = nflrs_mod_data_scaled, family = nbinom2)
 summary(nflrs_mt_mod)
 ```
 
@@ -91,7 +92,7 @@ growth_mt_vars <- intersect(rownames(summary(growth_mt_best_mod)$coefficients), 
 repro_mt_best_mod <- update(get.models(dredge_repro_mt, subset = 1)[[1]], nAGQ = 1)
 repro_mt_vars <- intersect(rownames(summary(repro_mt_best_mod)$coefficients), mt_mod_vars)
 
-nflrs_mt_best_mod <- update(get.models(dredge_nflrs_mt, subset = 1)[[1]], nAGQ = 1)
+nflrs_mt_best_mod <- get.models(dredge_nflrs_mt, subset = 1)[[1]]
 nflrs_mt_vars <- intersect(rownames(summary(nflrs_mt_best_mod)$coefficients), mt_mod_vars)
 ```
 
@@ -359,7 +360,7 @@ nflrs_mt_clim_formula <- as.formula(paste(
   paste(nflrs_mt_vars, collapse = " + "), ") * (",
   paste(nflrs_clim_vars, collapse = " + "), ") + (1|site.pop)"
 ))
-nflrs_mt_clim_mod <- glmer(nflrs_mt_clim_formula, family = poisson, data = nflrs_mod_data_scaled, nAGQ = 0)
+nflrs_mt_clim_mod <- glmmTMB(nflrs_mt_clim_formula, data = nflrs_mod_data_scaled, family = nbinom2)
 formula(nflrs_mt_clim_mod)
 length(attr(terms(nflrs_mt_clim_mod), "term.labels"))
 ```
@@ -389,7 +390,7 @@ stopCluster(clust)
 surv_mt_clim_best_mod   <- update(get.models(dredge_surv_mt_clim,   subset = 1)[[1]], nAGQ = 1)
 growth_mt_clim_best_mod <- get.models(dredge_growth_mt_clim, subset = 1)[[1]]
 repro_mt_clim_best_mod  <- update(get.models(dredge_repro_mt_clim,  subset = 1)[[1]], nAGQ = 1)
-nflrs_mt_clim_best_mod  <- update(get.models(dredge_nflrs_mt_clim,  subset = 1)[[1]], nAGQ = 1)
+nflrs_mt_clim_best_mod  <- get.models(dredge_nflrs_mt_clim,  subset = 1)[[1]]
 ```
 
 ```{r growth_var_mt_clim_dredge}
@@ -442,6 +443,6 @@ mt2clim_model_list <- list(
   nflrs_mt2clim_best_mod = nflrs_mt_clim_best_mod
 )
 
-saveRDS(mt2clim_model_list,paste0("r/modelFitResults/best_mt2clim_mods_",Sys.date(),".RDS"))
+saveRDS(mt2clim_model_list,paste0("r/modelFitResults/best_mt2clim_mods_",Sys.Date(),".RDS"))
 ```
 
