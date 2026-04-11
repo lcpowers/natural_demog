@@ -54,7 +54,9 @@ repro_clim_formula <- as.formula(paste(c("flowered ~ log_size_t0*(year + site + 
 repro_clim_mod <- glmer(repro_clim_formula, data = repro_mod_data_scaled, family = binomial, nAGQ=0)
 
 nflrs_clim_formula <- as.formula(paste(c("total_flrs ~ log_size_t0*(year + site + aspect.cat + ", paste(clim_vars, collapse = " + "), ") + (1|site.pop)"), collapse = " "))
-nflrs_clim_mod <- glmmTMB(nflrs_clim_formula, data = nflrs_mod_data_scaled, family = nbinom2)
+# nflrs_clim_mod1 <- glmmTMB(nflrs_clim_formula, data = nflrs_mod_data_scaled, family = nbinom2)
+nflrs_clim_mod <- glmer(nflrs_clim_formula, data = nflrs_mod_data_scaled, family = poisson, nAGQ=0)
+# nflrs_clim_mod3 <- glmer(nflrs_clim_formula, data = filter(nflrs_mod_data_scaled,total_flrs<200), family = poisson, nAGQ=1)
 ```
 
 ```{r clim_dredge}
@@ -89,8 +91,9 @@ stopCluster(clust)
 surv_clim_best_mod <- update(get.models(dredge_surv_clim, subset = 1)[[1]], nAGQ = 1)
 growth_clim_best_mod <- get.models(dredge_growth_clim, subset = 1)[[1]]
 repro_clim_best_mod <- update(get.models(dredge_repro_clim, subset = 1)[[1]], nAGQ = 1)
-nflrs_clim_best_mod <- get.models(dredge_nflrs_clim, subset = 1)[[1]]
+nflrs_clim_best_mod <- get.models(dredge_nflrs_clim, subset = 1, nAGQ = 1)[[1]]
 
+performance::r2(nflrs_clim_mod)
 ```
 
 ```{r growth_var_clim_dredge}
