@@ -423,13 +423,13 @@ growth_var_mt_clim_best_mod <- get.models(dredge_growth_var_mt_clim, subset = 1)
 Save all of the models
 ```{r}
 
-clim2mt_dredge_top10 <- list(
+mt2clim_dredge_top10 <- list(
   
-  surv_dredge_clim2mt = as.data.frame(dredge_surv_mt_clim) %>% slice_head(n = 10),
-  growth_dredge_clim2mt = as.data.frame(dredge_growth_mt_clim) %>% slice_head(n = 10),
-  growth_var_dredge_clim2mt = as.data.frame(dredge_growth_var_mt_clim) %>% slice_head(n = 10),
-  repro_dredge_clim2mt = as.data.frame(dredge_repro_mt_clim) %>% slice_head(n = 10),
-  nflrs_dredge_clim2mt = as.data.frame(dredge_nflrs_mt_clim) %>% slice_head(n = 10)
+  surv_dredge_mt2clim = as.data.frame(dredge_surv_mt_clim) %>% slice_head(n = 10),
+  growth_dredge_mt2clim = as.data.frame(dredge_growth_mt_clim) %>% slice_head(n = 10),
+  growth_var_dredge_mt2clim = as.data.frame(dredge_growth_var_mt_clim) %>% slice_head(n = 10),
+  repro_dredge_mt2clim = as.data.frame(dredge_repro_mt_clim) %>% slice_head(n = 10),
+  nflrs_dredge_mt2clim = as.data.frame(dredge_nflrs_mt_clim) %>% slice_head(n = 10)
   
 )
 

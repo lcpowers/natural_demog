@@ -54,9 +54,7 @@ repro_clim_formula <- as.formula(paste(c("flowered ~ log_size_t0*(year + site + 
 repro_clim_mod <- glmer(repro_clim_formula, data = repro_mod_data_scaled, family = binomial, nAGQ=0)
 
 nflrs_clim_formula <- as.formula(paste(c("total_flrs ~ log_size_t0*(year + site + aspect.cat + ", paste(clim_vars, collapse = " + "), ") + (1|site.pop)"), collapse = " "))
-# nflrs_clim_mod1 <- glmmTMB(nflrs_clim_formula, data = nflrs_mod_data_scaled, family = nbinom2)
 nflrs_clim_mod <- glmer(nflrs_clim_formula, data = nflrs_mod_data_scaled, family = poisson, nAGQ=0)
-# nflrs_clim_mod3 <- glmer(nflrs_clim_formula, data = filter(nflrs_mod_data_scaled,total_flrs<200), family = poisson, nAGQ=1)
 ```
 
 ```{r clim_dredge}
@@ -65,22 +63,22 @@ nflrs_clim_mod <- glmer(nflrs_clim_formula, data = nflrs_mod_data_scaled, family
 clust <- makeCluster(30, type = "FORK")
 
 dredge_surv_clim <- dredge(surv_clim_mod, cluster = clust, fixed = c("log_size_t0"), trace = 2,
-  subset = # (ann_snow_days + win_meanT_mean + win_meanT_range + gs_snow_days + gs_meanT_mean + gs_meanT_range) <= 3 &
+  subset = (ann_snow_days + win_meanT_mean + win_meanT_range + gs_snow_days + gs_meanT_mean + gs_meanT_range) <= 3 &
            !(ann_snow_days & win_meanT_mean) &
            !(ann_snow_days & gs_snow_days))
 
 dredge_growth_clim <- dredge(growth_clim_mod, cluster = clust, fixed = c("log_size_t0"), trace = 2,
-  subset = # (ann_snow_days + win_meanT_mean + win_meanT_range + gs_snow_days + gs_meanT_mean + gs_meanT_range) <= 3 &
+  subset = (ann_snow_days + win_meanT_mean + win_meanT_range + gs_snow_days + gs_meanT_mean + gs_meanT_range) <= 3 &
            !(ann_snow_days & win_meanT_mean) &
            !(ann_snow_days & gs_snow_days))
 
 dredge_repro_clim <- dredge(repro_clim_mod, cluster = clust, fixed = c("log_size_t0"), trace = 2,
-  subset = # (ann_snow_days + win_meanT_mean + win_meanT_range + gs_snow_days + gs_meanT_mean + gs_meanT_range) <= 3 &
+  subset = (ann_snow_days + win_meanT_mean + win_meanT_range + gs_snow_days + gs_meanT_mean + gs_meanT_range) <= 3 &
            !(ann_snow_days & win_meanT_mean) &
            !(ann_snow_days & gs_snow_days))
 
 dredge_nflrs_clim <- dredge(nflrs_clim_mod, cluster = clust, fixed = c("log_size_t0"), trace = 2,
-  subset = # (ann_snow_days + win_meanT_mean + win_meanT_range + gs_snow_days + gs_meanT_mean + gs_meanT_range) <= 3 &
+  subset = (ann_snow_days + win_meanT_mean + win_meanT_range + gs_snow_days + gs_meanT_mean + gs_meanT_range) <= 3 &
            !(ann_snow_days & win_meanT_mean) &
            !(ann_snow_days & gs_snow_days))
 
@@ -92,8 +90,7 @@ surv_clim_best_mod <- update(get.models(dredge_surv_clim, subset = 1)[[1]], nAGQ
 growth_clim_best_mod <- get.models(dredge_growth_clim, subset = 1)[[1]]
 repro_clim_best_mod <- update(get.models(dredge_repro_clim, subset = 1)[[1]], nAGQ = 1)
 nflrs_clim_best_mod <- get.models(dredge_nflrs_clim, subset = 1, nAGQ = 1)[[1]]
-
-performance::r2(nflrs_clim_mod)
+performance::r2(nflrs_clim_best_mod)
 ```
 
 ```{r growth_var_clim_dredge}
@@ -120,7 +117,7 @@ clim_mods <- list(surv_clim_best_mod = surv_clim_best_mod,
                   growth_clim_best_mod = growth_clim_best_mod,
                   repro_clim_best_mod = repro_clim_best_mod,
                   nflrs_clim_best_mod = nflrs_clim_best_mod,
-                  growth_var_best_mod = growth_var_clim_best_mod,
+                  growth_var_clim_best_mod = growth_var_clim_best_mod,
                   growth_var_mod_data_scaled = growth_var_mod_data_scaled)
 
 saveRDS(clim_mods,paste0("r/modelFitResults/best_clim_mods_",Sys.Date(),".RDS"))
@@ -128,7 +125,7 @@ saveRDS(clim_mods,paste0("r/modelFitResults/best_clim_mods_",Sys.Date(),".RDS"))
 
 
 ```{r read_clim_models}
-clim_mods <- readRDS(paste0("r/modelFitResults/best_clim_mods_2026-04-09.RDS")) %>% list2env(envir = .GlobalEnv)
+# clim_mods <- readRDS(paste0("r/modelFitResults/best_clim_mods_2026-04-09.RDS")) %>% list2env(envir = .GlobalEnv)
 
 formula(surv_clim_best_mod)
 formula(growth_clim_best_mod)
@@ -231,7 +228,7 @@ surv_clim_vars <- base::intersect(all.vars(formula(surv_clim_best_mod)), clim_va
 growth_clim_vars <- base::intersect(all.vars(formula(growth_clim_best_mod)), clim_vars)
 repro_clim_vars <- base::intersect(all.vars(formula(repro_clim_best_mod)), clim_vars)
 nflrs_clim_vars <- base::intersect(all.vars(formula(nflrs_clim_best_mod)), clim_vars)
-growth_var_clim_vars <- base::intersect(all.vars(formula(growth_var_best_mod)), clim_vars)
+growth_var_clim_vars <- base::intersect(all.vars(formula(growth_var_clim_best_mod)), clim_vars)
 
 # Formula: log_size_t0 * (year + site + aspect.cat + clim + mt) + (clim) * (mt) + (1|site.pop)
 # Fixed in dredge: log_size_t0 and clim main effects.
@@ -284,9 +281,9 @@ for(mt_var in mt_vars){
 }
 
 surv_mt_vars <- c("nrt_25", "tpi_25")
-growth_mt_vars <- c("tpi_25", "prcv_25")
+growth_mt_vars <- c("nrt_25", "prcv_25")
 nflrs_mt_vars <- c("tpi_25", "tri_25")
-repro_mt_vars <- c("est_25","tpi_25")
+repro_mt_vars <- c("tri_25","prcv_25")
 ```
 
 ```{r mt_global_models}
@@ -328,7 +325,7 @@ nflrs_mt_formula <- as.formula(paste(
   paste(nflrs_mt_vars, collapse = " + "), ") + (1|site.pop)"
 ))
 nflrs_mt_formula
-nflrs_mt_mod <- glmmTMB(nflrs_mt_formula, data = nflrs_mod_data_scaled, family = nbinom2)
+nflrs_mt_mod <- glmer(nflrs_mt_formula, data = nflrs_mod_data_scaled, family = poisson, nAGQ=0)
 formula(nflrs_mt_formula)
 length(attr(terms(nflrs_mt_mod), "term.labels"))
 ```
@@ -338,16 +335,16 @@ length(attr(terms(nflrs_mt_mod), "term.labels"))
 # which causes a name collision that silently breaks parallel dispatch.
 clust <- makeCluster(40, type = "FORK")
 
-dredge_surv_mt <- dredge(surv_mt_mod, cluster = clust, # m.lim = c(0,18),
+dredge_surv_mt <- dredge(surv_mt_mod, cluster = clust, m.lim = c(0,20),
   fixed = c("log_size_t0", surv_clim_vars), trace = 2)
 
-dredge_growth_mt <- dredge(growth_mt_mod, cluster = clust, # m.lim = c(0,18),
+dredge_growth_mt <- dredge(growth_mt_mod, cluster = clust, m.lim = c(0,20),
   fixed = c("log_size_t0", growth_clim_vars), trace = 2)
 
-dredge_repro_mt <- dredge(repro_mt_mod, cluster = clust, # m.lim = c(0,18),
+dredge_repro_mt <- dredge(repro_mt_mod, cluster = clust, m.lim = c(0,20),
   fixed = c("log_size_t0", repro_clim_vars), trace = 2)
 
-dredge_nflrs_mt <- dredge(nflrs_mt_mod, cluster = clust, # m.lim = c(0,18),
+dredge_nflrs_mt <- dredge(nflrs_mt_mod, cluster = clust, m.lim = c(0,20),
   fixed = c("log_size_t0", nflrs_clim_vars), trace = 2)
 
 stopCluster(clust)
