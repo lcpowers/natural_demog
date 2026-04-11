@@ -374,7 +374,7 @@ dredge_surv_mt_clim <- dredge(surv_mt_clim_mod, cluster = clust, # m.lim = c(0,1
   fixed = c("log_size_t0", surv_mt_vars), trace = 2)
 
 dredge_growth_mt_clim <- dredge(growth_mt_clim_mod, cluster = clust, # m.lim = c(0,15),
-  fixed = c("log_size_t0", growth_mt_vars), subset = !(ann_snow_days & gs_snow_days), trace = 2)
+  fixed = c("log_size_t0", growth_mt_vars), trace = 2)
 
 dredge_repro_mt_clim <- dredge(repro_mt_clim_mod, cluster = clust, # m.lim = c(0,15),
   fixed = c("log_size_t0", repro_mt_vars), trace = 2)
@@ -386,10 +386,10 @@ stopCluster(clust)
 ```
 
 ```{r mt_clim_model_selection}
-# surv_mt_clim_best_mod   <- update(get.models(dredge_surv_mt_clim,   subset = )[[1]], nAGQ = 1)
-# growth_mt_clim_best_mod <- get.models(dredge_growth_mt_clim, subset = )[[1]]
-# repro_mt_clim_best_mod  <- update(get.models(dredge_repro_mt_clim,  subset = )[[1]], nAGQ = 1)
-# nflrs_mt_clim_best_mod  <- update(get.models(dredge_nflrs_mt_clim,  subset = )[[1]], nAGQ = 1)
+surv_mt_clim_best_mod   <- update(get.models(dredge_surv_mt_clim,   subset = 1)[[1]], nAGQ = 1)
+growth_mt_clim_best_mod <- get.models(dredge_growth_mt_clim, subset = 1)[[1]]
+repro_mt_clim_best_mod  <- update(get.models(dredge_repro_mt_clim,  subset = 1)[[1]], nAGQ = 1)
+nflrs_mt_clim_best_mod  <- update(get.models(dredge_nflrs_mt_clim,  subset = 1)[[1]], nAGQ = 1)
 ```
 
 ```{r growth_var_mt_clim_dredge}
@@ -442,6 +442,6 @@ mt2clim_model_list <- list(
   nflrs_mt2clim_best_mod = nflrs_mt_clim_best_mod
 )
 
-saveRDS(mt2clim_model_list,"r/modelFitResults/best_mt2clim_mods_Apr9.RDS")
+saveRDS(mt2clim_model_list,paste0("r/modelFitResults/best_mt2clim_mods_",Sys.date(),".RDS"))
 ```
 
