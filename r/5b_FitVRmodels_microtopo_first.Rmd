@@ -45,20 +45,20 @@ nflrs_mod_data_scaled$site <- relevel(as.factor(nflrs_mod_data_scaled$site), ref
 # Fit and dredge global models
 
 ```{r vr_global_models}
-surv_mt_formula <- as.formula(paste(c("surv ~ log_size_t0*(year + site + aspect.cat + ", paste(mt_mod_vars, collapse = " + "), ") + (1|site.pop)"), collapse = " "))
+surv_mt_formula <- as.formula(paste(c("surv ~ log_size_t0*(year + site + aspect.cat + ", paste(mt_mod_vars, collapse = " + "), ") + site*aspect.cat + (1|site.pop)"), collapse = " "))
 surv_mt_mod <- glmer(formula = surv_mt_formula, family = "binomial", data = surv_mod_data_scaled, nAGQ = 0)
 summary(surv_mt_mod)
 
-growth_mt_formula <- as.formula(paste(c("growth ~ log_size_t0*(year + site + aspect.cat + ", paste(mt_mod_vars, collapse = " + "), ") + (1|site.pop)"), collapse = " "))
+growth_mt_formula <- as.formula(paste(c("growth ~ log_size_t0*(year + site + aspect.cat + ", paste(mt_mod_vars, collapse = " + "), ") + site*aspect.cat + (1|site.pop)"), collapse = " "))
 growth_mt_mod <- lmer(formula = growth_mt_formula, data = growth_mod_data_scaled, REML = F)
 summary(growth_mt_mod)
 
-repro_mt_formula <- as.formula(paste(c("flowered ~ log_size_t0*(year + site + aspect.cat + ", paste(mt_mod_vars, collapse = " + "), ") + (1|site.pop)"), collapse = " "))
+repro_mt_formula <- as.formula(paste(c("flowered ~ log_size_t0*(year + site + aspect.cat + ", paste(mt_mod_vars, collapse = " + "), ") + site*aspect.cat + (1|site.pop)"), collapse = " "))
 repro_mt_mod <- glmer(repro_mt_formula, data = repro_mod_data_scaled, family = binomial, nAGQ = 0)
 summary(repro_mt_mod)
 
-nflrs_mt_formula <- as.formula(paste(c("total_flrs ~ log_size_t0*(year + site + aspect.cat + ", paste(mt_mod_vars, collapse = " + "), ") + (1|site.pop)"), collapse = " "))
-nflrs_mt_mod <- glmmTMB(nflrs_mt_formula, data = nflrs_mod_data_scaled, family = nbinom2)
+nflrs_mt_formula <- as.formula(paste(c("total_flrs ~ log_size_t0*(year + site + aspect.cat + ", paste(mt_mod_vars, collapse = " + "), ") + site*aspect.cat + (1|site.pop)"), collapse = " "))
+nflrs_mt_mod <- glmer(nflrs_mt_formula, data = nflrs_mod_data_scaled, family = poisson, nAGQ = 0)
 summary(nflrs_mt_mod)
 ```
 
@@ -360,7 +360,7 @@ nflrs_mt_clim_formula <- as.formula(paste(
   paste(nflrs_mt_vars, collapse = " + "), ") * (",
   paste(nflrs_clim_vars, collapse = " + "), ") + (1|site.pop)"
 ))
-nflrs_mt_clim_mod <- glmmTMB(nflrs_mt_clim_formula, data = nflrs_mod_data_scaled, family = nbinom2)
+nflrs_mt_clim_mod <- glmer(nflrs_mt_clim_formula, data = nflrs_mod_data_scaled, family = poisson, nAGQ = 0)
 formula(nflrs_mt_clim_mod)
 length(attr(terms(nflrs_mt_clim_mod), "term.labels"))
 ```
