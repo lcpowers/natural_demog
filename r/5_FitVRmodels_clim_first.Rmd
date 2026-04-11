@@ -26,6 +26,16 @@ clim_vars <- names(clim)[!names(clim) %in% c("site", "pop", "year")]
 microtopo <- read_csv("data/output/model_microtopo_25cm.csv")
 mt_vars <- names(microtopo)[!names(microtopo) %in% c("site", "pop", "plantID","elv_pt")]
 table(repro_mod_data$pop,repro_mod_data$aspect.cat)
+
+surv_mod_data_scaled$aspect.cat <- relevel(as.factor(surv_mod_data_scaled$aspect.cat), ref = "top")
+growth_mod_data_scaled$aspect.cat <- relevel(as.factor(growth_mod_data_scaled$aspect.cat), ref = "top")
+repro_mod_data_scaled$aspect.cat <- relevel(as.factor(repro_mod_data_scaled$aspect.cat), ref = "top")
+nflrs_mod_data_scaled$aspect.cat <- relevel(as.factor(nflrs_mod_data_scaled$aspect.cat), ref = "top")
+
+surv_mod_data_scaled$site <- relevel(as.factor(surv_mod_data_scaled$site), ref = "niwot")
+growth_mod_data_scaled$site <- relevel(as.factor(growth_mod_data_scaled$site), ref = "niwot")
+repro_mod_data_scaled$site <- relevel(as.factor(repro_mod_data_scaled$site), ref = "niwot")
+nflrs_mod_data_scaled$site <- relevel(as.factor(nflrs_mod_data_scaled$site), ref = "niwot")
 ```
 
 # --------------
@@ -49,25 +59,25 @@ nflrs_clim_mod <- glmer(nflrs_clim_formula, data = nflrs_mod_data_scaled, family
 ```{r clim_dredge}
 # Note: must not name the cluster 'cl' — MuMIn uses cl <- match.call() internally,
 # which causes a name collision that silently breaks parallel dispatch.
-clust <- makeCluster(40, type = "FORK")
+clust <- makeCluster(30, type = "FORK")
 
 dredge_surv_clim <- dredge(surv_clim_mod, cluster = clust, fixed = c("log_size_t0"), trace = 2,
-  subset = (ann_snow_days + win_meanT_mean + win_meanT_range + gs_snow_days + gs_meanT_mean + gs_meanT_range) <= 3 &
+  subset = # (ann_snow_days + win_meanT_mean + win_meanT_range + gs_snow_days + gs_meanT_mean + gs_meanT_range) <= 3 &
            !(ann_snow_days & win_meanT_mean) &
            !(ann_snow_days & gs_snow_days))
 
 dredge_growth_clim <- dredge(growth_clim_mod, cluster = clust, fixed = c("log_size_t0"), trace = 2,
-  subset = (ann_snow_days + win_meanT_mean + win_meanT_range + gs_snow_days + gs_meanT_mean + gs_meanT_range) <= 3 &
+  subset = # (ann_snow_days + win_meanT_mean + win_meanT_range + gs_snow_days + gs_meanT_mean + gs_meanT_range) <= 3 &
            !(ann_snow_days & win_meanT_mean) &
            !(ann_snow_days & gs_snow_days))
 
 dredge_repro_clim <- dredge(repro_clim_mod, cluster = clust, fixed = c("log_size_t0"), trace = 2,
-  subset = (ann_snow_days + win_meanT_mean + win_meanT_range + gs_snow_days + gs_meanT_mean + gs_meanT_range) <= 3 &
+  subset = # (ann_snow_days + win_meanT_mean + win_meanT_range + gs_snow_days + gs_meanT_mean + gs_meanT_range) <= 3 &
            !(ann_snow_days & win_meanT_mean) &
            !(ann_snow_days & gs_snow_days))
 
 dredge_nflrs_clim <- dredge(nflrs_clim_mod, cluster = clust, fixed = c("log_size_t0"), trace = 2,
-  subset = (ann_snow_days + win_meanT_mean + win_meanT_range + gs_snow_days + gs_meanT_mean + gs_meanT_range) <= 3 &
+  subset = # (ann_snow_days + win_meanT_mean + win_meanT_range + gs_snow_days + gs_meanT_mean + gs_meanT_range) <= 3 &
            !(ann_snow_days & win_meanT_mean) &
            !(ann_snow_days & gs_snow_days))
 
