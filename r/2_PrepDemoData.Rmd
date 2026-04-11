@@ -13,7 +13,10 @@ knitr::opts_chunk$set(echo = TRUE)
 rm(list=ls())
 library(readxl)
 library(tidyverse)
-conflicts_prefer(dplyr::lag) 
+library(conflicted)
+conflicts_prefer(dplyr::lag)
+conflicts_prefer(dplyr::filter)
+conflicts_prefer(dplyr::select)
 ```
 
 # --------------
