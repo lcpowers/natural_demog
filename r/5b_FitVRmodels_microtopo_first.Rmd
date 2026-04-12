@@ -122,11 +122,6 @@ mt_mods <- list(surv_mt_best_mod = surv_mt_best_mod,
                   growth_var_mt_mod_data_scaled = growth_var_mod_data_scaled)
 
 saveRDS(mt_mods,paste0("r/modelFitResults/best_mt_mods_",Sys.Date(),".RDS"))
-```
-
-
-```{r read_mt_models}
-# mt_mods <- readRDS("r/modelFitResults/best_mt_mods_Apr9.RDS") %>% list2env(envir = .GlobalEnv)
 
 formula(surv_mt_best_mod)
 formula(growth_mt_best_mod)
@@ -134,7 +129,6 @@ formula(repro_mt_best_mod)
 formula(nflrs_mt_best_mod)
 formula(growth_var_mt_best_mod)
 
-# clim_mods <- readRDS("r/modelFitResults/best_clim_mods_Apr9.RDS") %>% list2env(envir = .GlobalEnv)
 ```
 
 # --------------
@@ -227,23 +221,10 @@ for(clim_var in clim_vars){
   cat(round(base_AICc,2) - round(AICc(mod_new),2),"\n")
 
 }
-# ann_snow_days new: 3221.76 base: 3220.17 
-# -1.59 
-# win_meanT_mean new: 3219.81 base: 3220.17 
-# 0.36 
-# win_meanT_range new: 3221.36 base: 3220.17 
-# -1.19 
-# gs_snow_days new: 3216.55 base: 3220.17 
-# 3.62 
-# gs_meanT_mean new: 3210.59 base: 3220.17 
-# 9.58 
-# gs_meanT_range new: 3200.49 base: 3220.17 
-# 19.68 
 
 # growth
 growth_base <- growth_mt_best_mod
 base_AICc <- AICc(growth_base)
-
 for(clim_var in clim_vars){
   mod_new <- update(growth_base, as.formula(paste(". ~ . +", clim_var)))
   AICc(mod_new)                   
@@ -252,18 +233,6 @@ for(clim_var in clim_vars){
 
 }
 
-# ann_snow_days new: -154.94 base: -153.94 
-# 1 
-# win_meanT_mean new: -153 base: -153.94 
-# -0.94 
-# win_meanT_range new: -152.22 base: -153.94 
-# -1.72 
-# gs_snow_days new: -162.75 base: -153.94 
-# 8.81 
-# gs_meanT_mean new: -162.98 base: -153.94 
-# 9.04 
-# gs_meanT_range new: -153.82 base: -153.94 
-# -0.12 
 
 # nflr
 nflr_base <- update(nflrs_mt_best_mod,nAGQ=0)
@@ -274,23 +243,11 @@ for(clim_var in clim_vars){
   cat(paste(c(clim_var,"new:",round(AICc(mod_new),2),"base:",round(base_AICc,2),"\n")))
   cat(round(base_AICc,2) - round(AICc(mod_new),2),"\n")
 }
-# ann_snow_days new: 41715.27 base: 41730.37 
-# 15.1 
-# win_meanT_mean new: 41722.81 base: 41730.37 
-# 7.56 
-# win_meanT_range new: 41697.5 base: 41730.37 
-# 32.87 
-# gs_snow_days new: 41644.3 base: 41730.37 # 1
-# 86.07 
-# gs_meanT_mean new: 41690.64 base: 41730.37 # 2
-# 39.73 
-# gs_meanT_range new: 41720 base: 41730.37 
-# 10.37 
+
 
 # repro
 repro_base <- update(repro_mt_best_mod,nAGQ=0)
 base_AICc <- AICc(repro_base)
-
 for(clim_var in clim_vars){
   mod_new <- update(repro_base, as.formula(paste(". ~ . +", clim_var)))
   AICc(mod_new)                   
@@ -298,18 +255,6 @@ for(clim_var in clim_vars){
   cat(round(base_AICc,2) - round(AICc(mod_new),2),"\n")
 }
 
-# ann_snow_days new: 5988.1 base: 5995.08 
-# 6.98 
-# win_meanT_mean new: 5996.89 base: 5995.08 
-# -1.81 
-# win_meanT_range new: 5977.76 base: 5995.08 # 3
-# 17.32 
-# gs_snow_days new: 5966.74 base: 5995.08 # 1
-# 28.34 
-# gs_meanT_mean new: 5972.34 base: 5995.08 # 2
-# 22.74 
-# gs_meanT_range new: 5996.16 base: 5995.08 
-# -1.08 
 
 surv_clim_vars <- c("gs_meanT_range","gs_meanT_mean","gs_snow_days")
 growth_clim_vars <- c("gs_meanT_mean","gs_snow_days")
@@ -356,7 +301,7 @@ length(attr(terms(repro_mt_clim_mod), "term.labels"))
 
 nflrs_mt_clim_formula <- as.formula(paste(
   "total_flrs ~ log_size_t0 * (year + site + aspect.cat + ",
-  paste(c(nflrs_mt_vars, nflrs_clim_vars), collapse = " + "), ") + (",
+  paste(c(nflrs_mt_vars, nflrs_clim_vars), collapse = " + "), ") + aspect.cat*site + (",
   paste(nflrs_mt_vars, collapse = " + "), ") * (",
   paste(nflrs_clim_vars, collapse = " + "), ") + (1|site.pop)"
 ))
