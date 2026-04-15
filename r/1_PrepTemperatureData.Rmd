@@ -106,8 +106,9 @@ for(pop in pops){
              pop = pop,
              reader = "hobo",
              fn=basename(fn)) %>% 
-      filter(!is.na(temp))
-
+      filter(!is.na(temp)) %>% 
+      tail(-2)
+    # plot(1:nrow(tmp),tmp$temp,main=fn)
     
     niwot_temps_2023 <- rbind(niwot_temps_2023,tmp) %>% 
       unique();rm(tmp)
@@ -115,7 +116,9 @@ for(pop in pops){
   }
 
 }
-
+ggplot(niwot_temps_2023,aes(x=date,y=temp,fill=pop))+
+  geom_point()+
+  facet_wrap(~pop,nrow=1)
 ```
 
 ## Niwot 2024
@@ -145,22 +148,19 @@ for(pop in pops){
              pop = pop,
              reader = "hobo",
              fn=basename(fn)) %>% 
-      filter(!is.na(temp))
+      filter(!is.na(temp)) %>% 
+      tail(-5)
     
-    if(basename(fn)=="nr_NorthLower_A.csv"){tmp <- tmp[-c(1:6),]}
-    if(basename(fn)=="nr_TopLower_A.csv"){tmp <- tmp[-c(1),]}
-    if(basename(fn)=="nr_TopUpper_B.csv"){tmp <- tmp[-c(1),]}
-    if(basename(fn)=="nr_NorthUpper_B.csv"){tmp <- tmp[-c(1),]}
-    if(basename(fn)=="nr_NorthUpper_A.csv"){tmp <- tmp[-c(1:3),]}
-    if(basename(fn)=="nr_NorthLower_A.csv"){tmp <- tmp[-c(1:6),]}
-    if(basename(fn)=="nr_NorthLower_B.csv"){tmp <- tmp[-c(1:2),]}
-
+    if(basename(fn)=="nr_NorthLower_A.csv"){tmp <- tmp[-c(1:2),]}
+    # plot(1:nrow(tmp),tmp$temp,main=fn)
     niwot_temps_2024 <- rbind(niwot_temps_2024,tmp) %>% 
       unique();rm(tmp)
     
   }
-
 }
+ggplot(niwot_temps_2024,aes(x=date,y=temp,fill=pop))+
+  geom_point()+
+  facet_wrap(~pop,nrow=1)
 ```
 
 ## Niwot 2025
@@ -189,7 +189,10 @@ for(pop in pops){
              site = "niwot",
              pop = pop,
              reader = "hobo",
-             fn=basename(fn))
+             fn=basename(fn)) %>% 
+      tail(-5)
+    
+    # plot(1:nrow(tmp),tmp$temp,main=fn)
     
     niwot_temps_2025 <- rbind(niwot_temps_2025,tmp) %>% 
       unique();rm(tmp)
@@ -197,6 +200,9 @@ for(pop in pops){
   }
 
 }
+ggplot(niwot_temps_2025,aes(x=date,y=temp,fill=pop))+
+  geom_point()+
+  facet_wrap(~pop,nrow=1)
 ```
 
 ## Niwot bind data
@@ -280,26 +286,27 @@ for(pop in pops){
   p_line = ggplot(daily_niwot_temps_filled,aes(x=!!sym(pop),y=!!sym(paste0(pop,"_pred"))))+
     geom_point()+
     geom_abline(slope=1)+
-    theme_classic()+
+    theme_classic(base_size = 6)+
     labs(title=pop,subtitle="Niwot",x=pop,y=paste0(pop," predicted"))
 
   p_ts = ggplot(daily_niwot_temps_filled,aes(x=date))+
     geom_point(aes(y=.data[[pop]],color="actual"),size=2)+
     geom_point(aes(y=.data[[paste0(pop,"_pred")]],color="predicted"))+
-    theme_classic(base_size = 12)+
+    theme_classic(base_size = 6)+
     labs(title=pop,subtitle="Niwot",x="date",y="mean daily temp (C)")+
     scale_color_manual(values=c("actual"="blue","predicted"="sienna1"))
 
   p_hist = ggplot(daily_niwot_temps_filled,aes(x=!!sym(pop)-!!sym(paste0(pop,"_pred"))))+
     geom_histogram(fill="grey90",color="grey30",bins=50)+
     geom_vline(xintercept = 0,color="red")+
-    theme_classic()+
+    theme_classic(base_size = 6)+
     labs(title=pop,subtitle="Niwot",x="actual-predicted")
   
-  p <- (p_line | p_hist) / p_ts
+  p <- (p_line | p_hist) 
+  p <- p / p_ts
 
+  ggsave(plot = p,filename = paste0("figures/filledTdataplots/nr_",pop,".pdf"),h=4,w=6)
   plot_list[[pop]] <- p
-   
 }
 
 lapply(plot_list, print)
@@ -336,7 +343,9 @@ for(pop in pops){
              site = "guanella",
              pop = pop,
              reader = "hobo",
-             fn=basename(fn))
+             fn=basename(fn)) %>% 
+      tail(-5)
+    # plot(1:nrow(tmp),tmp$temp,main=fn)
     
     guanella_temps_2023 <- rbind(guanella_temps_2023,tmp) %>% 
       unique();rm(tmp)
@@ -344,6 +353,10 @@ for(pop in pops){
   }
 
 }
+guanella_temps_2023 <- guanella_temps_2023 %>% select(-fn) %>% unique()
+ggplot(guanella_temps_2023,aes(x=date,y=temp,fill=pop))+
+  geom_point()+
+  facet_wrap(~pop,nrow=1)
 
 ```
 
@@ -356,10 +369,8 @@ year <- "2024"
 guanella_temps_2024 <- NULL
 
 for(pop in pops){
-  
   pop.files <- list.files(path = paste0("data/climate/SoilTemps/guanella/",year),
                           pattern = pop, full.names = T)
-  
   for(fn in pop.files){
     # fn <- pop.files[2]
     
@@ -376,13 +387,13 @@ for(pop in pops){
              pop = pop,
              reader = "hobo",
              fn=basename(fn)) %>% 
-      filter(!is.na(temp))
+      filter(!is.na(temp)) %>% 
+      tail(-5)
     
-    if(basename(fn)=="gp_NorthUpper_A.csv"){tmp <- tmp[-c(1:5),]}
-    if(basename(fn)=="gp_SouthLower_A.csv"){tmp <- tmp[-c(1:2),]}
-    if(basename(fn)=="gp_SouthLower_B.csv"){tmp <- tmp[-c(1:7),]}
-    if(basename(fn)=="gp_TopLower_A.csv"){tmp <- tmp[-c(1:2),]}
-    if(basename(fn)=="gp_TopLower_B.csv"){tmp <- tmp[-c(1:7),]}
+    if(basename(fn)=="gp_NorthLower_B.csv"){tmp <- tmp[-c(1:15),]}
+    if(basename(fn)=="gp_SouthLower_B.csv"){tmp <- tmp[-c(1:2),]}
+    if(basename(fn)=="gp_TopLower_B.csv"){tmp <- tmp[-c(1:2),]}
+    # plot(1:nrow(tmp),tmp$temp,main=fn)
     
     guanella_temps_2024 <- rbind(guanella_temps_2024,tmp) %>% 
       unique();rm(tmp)
@@ -390,7 +401,10 @@ for(pop in pops){
   }
 
 }
-
+guanella_temps_2024<-guanella_temps_2024 %>% select(-fn) %>% unique()
+ggplot(guanella_temps_2024,aes(x=date,y=temp,fill=pop))+
+  geom_point()+
+  facet_wrap(~pop,nrow=1)
 ```
 
 ## Guanella 2025
@@ -402,7 +416,7 @@ year <- "2025"
 guanella_temps_2025 <- NULL
 
 for(pop in pops){
-  
+  # pop = "NorthUpper"
   pop.files <- list.files(path = paste0("data/climate/SoilTemps/guanella/",year),
                           pattern = pop, full.names = T)
   
@@ -410,7 +424,7 @@ for(pop in pops){
 
     if(str_detect(fn,"iButton")) next
     if(str_detect(fn,"NorthLower_A_sept")) next
-      
+    
     tmp <- read_csv(fn,skip = skip_rows_pendants) %>% 
       select(contains(c("Date Time","Temp"))) %>% 
       rename_with(~c("dt", "temp"), .cols = c(1, 2)) %>% 
@@ -421,21 +435,24 @@ for(pop in pops){
              site = "guanella",
              pop = pop,
              reader = "hobo",
-             fn=basename(fn))
+             fn=basename(fn)) %>% 
+      tail(-5)
     
     if(basename(fn)=="gp_TopUpper_B_sept.csv"){
-      
       tmp = tmp %>% 
         filter(!date%in%seq.Date("2024-06-25","2025-07-27"))
-      
     }
+    # plot(1:nrow(tmp),tmp$temp,main=fn)
     
     guanella_temps_2025 <- rbind(guanella_temps_2025,tmp) %>%
-      unique();rm(tmp)
+      unique()# ;rm(tmp)
   }
 
 }
-
+guanella_temps_2025 <-guanella_temps_2025 %>% select(-fn) %>% unique()
+ggplot(guanella_temps_2025,aes(x=date,y=temp,fill=pop))+
+  geom_point()+
+  facet_wrap(~pop,nrow=1)
 
 ```
 
@@ -463,6 +480,13 @@ daily_guanella_temps_nonmissing <- all_guanella_temps %>%
   select(-c(pr_tmin_upper,pr_tmax_upper,snotel_tmax,snotel_tmin))
 
 daily_guanella_temps_nonmissing %>% select(where(is.numeric)) %>%  cor(use = "pairwise.complete.obs") %>% corrplot::corrplot()   
+ggplot(daily_guanella_temps_nonmissing,aes(x=date))+
+  geom_point(aes(y=NorthLower,color="N lower"))+
+  geom_point(aes(y=NorthUpper,color="N upper"))+
+  geom_point(aes(y=SouthUpper,color="S upper"))+
+  geom_point(aes(y=SouthLower,color="S lower"))+
+  geom_point(aes(y=TopUpper,color="T upper"))
+  
 ```
 
 ## Predict guanella
@@ -512,24 +536,26 @@ for(pop in pops){
   p_line = ggplot(daily_guanella_temps_filled,aes(x=!!sym(pop),y=!!sym(paste0(pop,"_pred"))))+
     geom_point()+
     geom_abline(slope=1)+
-    theme_classic()+
+    theme_classic(base_size = 6)+
     labs(title=pop,subtitle="GP",x=pop,y=paste0(pop," predicted"))
 
   p_ts = ggplot(daily_guanella_temps_filled,aes(x=date))+
     geom_point(aes(y=.data[[pop]],color="actual"),size=2)+
     geom_point(aes(y=.data[[paste0(pop,"_pred")]],color="predicted"))+
-    theme_classic(base_size = 12)+
+    theme_classic(base_size = 6)+
     labs(title=pop,subtitle="GP",x="date",y="mean daily temp (C)")+
     scale_color_manual(values=c("actual"="blue","predicted"="sienna1"))
 
   p_hist = ggplot(daily_guanella_temps_filled,aes(x=!!sym(pop)-!!sym(paste0(pop,"_pred"))))+
     geom_histogram(fill="grey90",color="grey30",bins=50)+
     geom_vline(xintercept = 0,color="red")+
-    theme_classic()+
+    theme_classic(base_size = 6)+
     labs(title=pop,subtitle="GP",x="actual-predicted")
 
-  p <- (p_line | p_hist) / p_ts
+  p <- (p_line | p_hist) 
+  p <- p / p_ts
 
+  ggsave(plot = p,filename = paste0("figures/filledTdataplots/gp_",pop,".pdf"),h=4,w=6)
   plot_list[[pop]] <- p
 
 }
@@ -567,15 +593,17 @@ for(pop in pops){
              site = "jones",
              pop = pop,
              reader = "hobo",
-             fn=basename(fn))
-    
+             fn=basename(fn)) %>% 
+      tail(-5)
+    # plot(1:nrow(tmp),tmp$temp,main=fn)
     jones_temps_2023 <- rbind(jones_temps_2023,tmp) %>% 
       unique();rm(tmp)
     
   }
-
 }
-
+ggplot(jones_temps_2023,aes(x=date,y=temp,fill=pop))+
+  geom_point()+
+  facet_wrap(~pop,nrow=1)
 ```
 
 ## Jones 2024
@@ -606,21 +634,27 @@ for(pop in pops){
              pop = pop,
              reader = "hobo",
              fn=basename(fn)) %>% 
-      arrange(date)
+      arrange(date) %>% 
+      filter(!is.na(temp)) %>% 
+      tail(-5)
     
-    if(basename(fn)=="jp_NorthEast_B.csv"){  tmp = tmp[-c(1:8),] }
-    if(basename(fn)=="jp_NorthEast_A.csv"){  tmp = tmp[-c(1),] }
-    if(basename(fn)=="jp_TopEast_A.csv"){  tmp = tmp[-c(1),] }
-    if(basename(fn)=="jp_NorthWest_A.csv"){  tmp = tmp[-c(1),] }
-    if(basename(fn)=="jp_NorthWest_B.csv"){  tmp = tmp[-c(1:11),] }
+    if(basename(fn)=="jp_NorthEast_B.csv"){  tmp = tmp[-c(1:5),] }
+    if(basename(fn)=="jp_NorthWest_B.csv"){  tmp = tmp[-c(1:5),] }
+    if(basename(fn)=="jp_NorthEast_A.csv"){  tmp = tmp[-c((nrow(tmp)-2):nrow(tmp)),] }
+    if(basename(fn)=="jp_SouthWest_B.csv"){  tmp = tmp[-c((nrow(tmp)-2):nrow(tmp)),] }
+    if(basename(fn)=="jp_SouthEast_B.csv"){  tmp = tmp[-c((nrow(tmp)-1):nrow(tmp)),] }
+    
+    # plot(1:nrow(tmp),tmp$temp,main=fn)
     
     jones_temps_2024 <- rbind(jones_temps_2024,tmp) %>% 
-      unique();rm(tmp)
+      unique()# ;rm(tmp)
     
   }
 
 }
-
+ggplot(jones_temps_2024,aes(x=date,y=temp,fill=pop))+
+  geom_point()+
+  facet_wrap(~pop,nrow=1)
 ```
 
 ## Jones 2025
@@ -651,7 +685,8 @@ for(pop in pops){
              pop = pop,
              reader = "hobo",
              fn=basename(fn)) %>% 
-      filter(!is.na(temp))
+      filter(!is.na(temp)) %>% 
+      tail(-2)
     
     if(basename(fn)=="jp_SouthWest_B_sept.csv"){
       tmp = filter(tmp,date>"2025-06-20")
@@ -664,15 +699,15 @@ for(pop in pops){
     if(str_detect(basename(fn),"TopEast")){  tmp = tmp[-c(1:5),] }
     if(str_detect(basename(fn),"TopWest")){  tmp = tmp[-c(1:2),] }
     if(str_detect(basename(fn),"SouthWest")){  tmp = tmp[-c(1:2),] }
-    # plot(tmp$date,tmp$temp)
+    # plot(tmp$date,tmp$temp,main=fn)
     
     jones_temps_2025 <- rbind(jones_temps_2025,tmp) %>%
       unique();rm(tmp)
   }
-
 }
-
-
+ggplot(jones_temps_2023,aes(x=date,y=temp,fill=pop))+
+  geom_point()+
+  facet_wrap(~pop,nrow=1)
 ```
 
 ## Jones bind data
@@ -748,24 +783,26 @@ for(pop in pops){
   p_line = ggplot(daily_jones_temps_filled,aes(x=!!sym(pop),y=!!sym(paste0(pop,"_pred"))))+
     geom_point()+
     geom_abline(slope=1)+
-    theme_classic()+
+    theme_classic(base_size = 6)+
     labs(title=pop,x=pop,y=paste0(pop," predicted"))
 
   p_ts = ggplot(daily_jones_temps_filled,aes(x=date))+
     geom_point(aes(y=.data[[pop]],color="actual"),size=2)+
     geom_point(aes(y=.data[[paste0(pop,"_pred")]],color="predicted"))+
-    theme_classic(base_size = 12)+
+    theme_classic(base_size = 6)+
     labs(title=pop,x="date",y="mean daily temp (C)")+
     scale_color_manual(values=c("actual"="blue","predicted"="sienna1"))
 
   p_hist = ggplot(daily_jones_temps_filled,aes(x=!!sym(pop)-!!sym(paste0(pop,"_pred"))))+
     geom_histogram(fill="grey90",color="grey30",bins=50)+
     geom_vline(xintercept = 0,color="red")+
-    theme_classic()+
+    theme_classic(base_size = 6)+
     labs(title=pop,x="actual-predicted")
 
-  p <- (p_line | p_hist) / p_ts
+  p <- (p_line | p_hist) 
+  p <- p / p_ts
 
+  ggsave(plot = p,filename = paste0("figures/filledTdataplots/jp_",pop,".pdf"),h=4,w=6)
   plot_list[[pop]] <- p
 
 }
@@ -887,7 +924,8 @@ for(s in unique(clim_summary$site)){
                        title = s, mar = c(0,0,2,0))
 }
 
-write_csv(clim_summary, "data/climate/for_analyses/clim_summary.csv")
+write_csv(clim_summary, "data/climate/for_analyses/clim_summary2.csv")
 
+clim_summary <- read_csv("data/climate/for_analyses/clim_summary.csv")
 ```
 
