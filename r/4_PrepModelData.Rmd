@@ -17,7 +17,7 @@ conflicts_prefer(dplyr::filter)
 ```
 
 ```{r load_data}
-readRDS("data/demog/vr_modData/mod_demog_data.rds") %>% list2env(.GlobalEnv)
+readRDS("data/demog/vr_modData/mod_data.rds") %>% list2env(.GlobalEnv)
 
 microtopo <- read_csv("data/output/model_microtopo_25cm.csv")
 
