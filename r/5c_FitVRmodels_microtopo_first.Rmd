@@ -76,16 +76,16 @@ summary(nflrs_mt_mod)
 clust <- makeCluster(30, type = "FORK")
 
 dredge_surv_mt <- dredge(surv_mt_mod, cluster = clust, fixed = c("log_size_t0"), trace = 2, # m.lim = c(0,15),
-  subset = (est_25 + nrt_25 + tpi_25 + tri_25 + plcv_25) <= 3)
+  subset = (est_25 + nrt_25 + tpi_25 + tri_25 + plcv_25 + prcv_25) <= 3)
 
 dredge_growth_mt <- dredge(growth_mt_mod, cluster = clust, fixed = c("log_size_t0"), trace = 2, # m.lim = c(0,15),
-  subset = (est_25 + nrt_25 + tpi_25 + tri_25 + plcv_25 ) <= 3)
+  subset = (est_25 + nrt_25 + tpi_25 + tri_25 + plcv_25 + prcv_25) <= 3)
 
 dredge_repro_mt <- dredge(repro_mt_mod, cluster = clust, fixed = c("log_size_t0"), trace = 2, # m.lim = c(0,15),
- subset = (est_25 + nrt_25 + tpi_25 + tri_25 + plcv_25) <= 3)
+  subset = (est_25 + nrt_25 + tpi_25 + tri_25 + plcv_25 + prcv_25) <= 3)
 
 dredge_nflrs_mt <- dredge(nflrs_mt_mod, cluster = clust, fixed = c("log_size_t0"), trace = 2, # m.lim = c(0,15),
-  subset = (est_25 + nrt_25 + tpi_25 + tri_25 + plcv_25) <= 3)
+  subset = (est_25 + nrt_25 + tpi_25 + tri_25 + plcv_25 + prcv_25) <= 3)
 
 stopCluster(clust)
 ```
