@@ -125,7 +125,7 @@ formula(surv_clim_best_mod)
 formula(growth_clim_best_mod)
 formula(repro_clim_best_mod)
 formula(nflrs_clim_best_mod)
-formula(growth_var_best_mod)
+formula(growth_var_clim_best_mod)
 
 surv_clim_vars <- base::intersect(all.vars(formula(surv_clim_best_mod)), clim_vars)
 growth_clim_vars <- base::intersect(all.vars(formula(growth_clim_best_mod)), clim_vars)

@@ -100,7 +100,7 @@ growth_mt_vars <- intersect(rownames(summary(growth_mt_best_mod)$coefficients), 
 repro_mt_best_mod <- update(get.models(dredge_repro_mt, subset = 1)[[1]], nAGQ = 1)
 repro_mt_vars <- intersect(rownames(summary(repro_mt_best_mod)$coefficients), mt_mod_vars)
 
-nflrs_mt_best_mod <- get.models(dredge_nflrs_mt, subset = 1)[[1]]
+nflrs_mt_best_mod <- update(get.models(dredge_nflrs_mt, subset = 1)[[1]], nAGQ = 1)
 nflrs_mt_vars <- intersect(rownames(summary(nflrs_mt_best_mod)$coefficients), mt_mod_vars)
 ```
 
@@ -343,7 +343,7 @@ stopCluster(clust)
 surv_mt_clim_best_mod   <- update(get.models(dredge_surv_mt_clim,   subset = 1)[[1]], nAGQ = 1)
 growth_mt_clim_best_mod <- get.models(dredge_growth_mt_clim, subset = 1)[[1]]
 repro_mt_clim_best_mod  <- update(get.models(dredge_repro_mt_clim,  subset = 1)[[1]], nAGQ = 1)
-nflrs_mt_clim_best_mod  <- get.models(dredge_nflrs_mt_clim,  subset = 1)[[1]]
+nflrs_mt_clim_best_mod  <- update(get.models(dredge_nflrs_mt_clim,  subset = 1)[[1]], nAGQ = 1)
 ```
 
 ```{r growth_var_mt_clim_dredge}

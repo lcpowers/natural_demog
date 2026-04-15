@@ -76,7 +76,7 @@ stopCluster(clust)
 surv_climOnly_best_mod <- update(get.models(dredge_surv_climOnly, subset = 1)[[1]], nAGQ = 1)
 growth_climOnly_best_mod <- get.models(dredge_growth_climOnly, subset = 3)[[1]]
 repro_climOnly_best_mod <- update(get.models(dredge_repro_climOnly, subset = 1)[[1]], nAGQ = 1)
-nflrs_climOnly_best_mod <- get.models(dredge_nflrs_climOnly, subset = 1, nAGQ = 1)[[1]]
+nflrs_climOnly_best_mod <- update(get.models(dredge_nflrs_climOnly, subset = 1)[[1]], nAGQ = 1)
 ```
 
 ```{r growth_var_climOnly_dredge}
@@ -130,7 +130,7 @@ stopCluster(clust)
 surv_mtOnly_best_mod <- update(get.models(dredge_surv_mtOnly, subset = 1)[[1]], nAGQ = 1)
 growth_mtOnly_best_mod <- get.models(dredge_growth_mtOnly, subset = 1)[[1]]
 repro_mtOnly_best_mod <- update(get.models(dredge_repro_mtOnly, subset = 1)[[1]], nAGQ = 1)
-nflrs_mtOnly_best_mod <- get.models(dredge_nflrs_mtOnly, subset = 1, nAGQ = 1)[[1]]
+nflrs_mtOnly_best_mod <- update(get.models(dredge_nflrs_mtOnly, subset = 1)[[1]], nAGQ = 1)
 ```
 
 ```{r growth_var_mtOnly_dredge}
