@@ -97,7 +97,7 @@ stopCluster(clust)
 surv_clim_best_mod <- update(get.models(dredge_surv_clim, subset = 1)[[1]], nAGQ = 1)
 growth_clim_best_mod <- get.models(dredge_growth_clim, subset = 1)[[1]]
 repro_clim_best_mod <- update(get.models(dredge_repro_clim, subset = 1)[[1]], nAGQ = 1)
-nflrs_clim_best_mod <- get.models(dredge_nflrs_clim, subset = 1, nAGQ = 2)[[1]]
+nflrs_clim_best_mod <- update(get.models(dredge_nflrs_clim, subset = 1)[[1]], nAGQ = 1)
 performance::r2(nflrs_clim_best_mod)
 ```
 
