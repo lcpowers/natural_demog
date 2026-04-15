@@ -143,78 +143,6 @@ formula(growth_var_mt_best_mod)
 # clim variable winnowing: univariate R², correlation + VIF
 # --------------
 
-```{r mt_univariate_r2, fig.width = 9, fig.height = 6}
-vr_mod_list <- list(
-  surv = list(data = surv_mod_data_scaled, response = "surv", family = "binomial"),
-  growth = list(data = growth_mod_data_scaled, response = "growth", family = "gaussian"),
-  # growth_var = list(data = growth_var_mod_data_scaled, response = "growth_resid.sq", family = "gaussian"),
-  flowered = list(data = repro_mod_data_scaled, response = "flowered", family = "binomial"),
-  n_flrs = list(data = nflrs_mod_data_scaled, response = "total_flrs", family = "poisson")
-)
-
-clim_r2 <- data.frame()
-
-for (v in clim_vars) {
-  for (vr_name in names(vr_mod_list)) {
-
-    vr  <- vr_mod_list[[vr_name]]
-    
-    dat <- vr$data[, c(vr$response, v)] %>% drop_na()
-    
-    fml <- as.formula(paste(vr$response, "~", v))
-    r2  <- tryCatch({
-      if (vr$family == "gaussian") {
-        
-        summary(lm(fml, data = dat))$r.squared
-      
-        } else {
-        m <- glm(fml, data = dat, family = vr$family)
-        1 - m$deviance / m$null.deviance
-      }
-    }, error = function(e) NA_real_)
-    clim_r2 <- rbind(clim_r2, data.frame(vr = vr_name, var = v, r2 = r2))
-  }
-}
-
-r2plot <- clim_r2 %>%
-  filter(!is.na(r2)) %>%
-  # filter(vr=="repro") %>% 
-  mutate(var = reorder(var, r2, FUN = mean)) %>%
-  ggplot(aes(x = r2, y = var)) +
-  geom_point(size = 2.5, color = "#5BADA8") +
-  facet_wrap(~vr, scales = "free_x",ncol=1) +
-  labs(x = "R² / pseudo-R²", y = NULL,
-       title = "Climate variables — univariate variance explained per vital rate") +
-  theme_bw();r2plot
-
-corr_plot <- clim %>%
-  select(all_of(c("site", clim_vars))) %>%
-  group_by(site) %>%
-  group_modify(~ {
-    .x %>%
-      cor(use = "pairwise.complete.obs") %>%
-      as.data.frame() %>%
-      rownames_to_column("var1") %>%
-      pivot_longer(-var1, names_to = "var2", values_to = "r")
-  }) %>%
-  ungroup() %>%
-  mutate(var1 = factor(var1, levels = clim_vars),
-         var2 = factor(var2, levels = rev(clim_vars))) %>%
-  ggplot(aes(x = var1, y = var2, fill = r)) +
-  geom_tile() +
-  geom_text(aes(label = round(r, 2)), size = 2) +
-  scale_fill_gradient2(low = "#2166AC", mid = "white", high = "#B2182B",
-                       midpoint = 0, limits = c(-1, 1)) +
-  facet_wrap(~site, nrow = 1) +
-  theme_bw() +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
-  labs(x = NULL, y = NULL, fill = "r")
-(r2plot | corr_plot)
-
-
-```
-
-
 # try to winnow variables one at a time using AICc
 ```{r test_clim_vars}
 
@@ -357,7 +285,7 @@ growth_var_mt_main <- intersect(all.vars(formula(growth_mt_clim_best_mod)), mt_v
 growth_var_clim_vars <- growth_clim_vars
 
 growth_var_mt_clim_formula <- as.formula(paste(
-  "growth_resid.sq ~ log_size_t0 * (year + site +",
+  "growth_resid.sq ~ log_size_t0 * (year + site + aspect.cat + ",
   paste(c(growth_var_mt_main, growth_var_clim_vars), collapse = " + "), ") + (",
   paste(growth_var_mt_main, collapse = " + "), ") * (",
   paste(growth_var_clim_vars, collapse = " + "), ") + (1|site.pop)"
