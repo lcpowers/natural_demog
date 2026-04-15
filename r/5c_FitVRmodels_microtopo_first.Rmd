@@ -112,7 +112,7 @@ growth_var_mt_mod <- lmer(growth_var_mt_formula, data = growth_var_mod_data_scal
 
 clust <- makeCluster(32, type = "FORK")
 dredge_growth_var_mt <- dredge(growth_var_mt_mod, cluster = clust, fixed = c("log_size_t0"), trace = 2,
-                                subset = (est_25 + nrt_25 + tpi_25 + tri_25 + plcv_25) <= 3)
+                                subset = (est_25 + nrt_25 + tpi_25 + tri_25 + plcv_25 + prcv_25) <= 3)
 stopCluster(clust)
 
 growth_var_mt_best_mod <- get.models(dredge_growth_var_mt, subset = 1)[[1]]
