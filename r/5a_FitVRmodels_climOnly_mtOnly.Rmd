@@ -172,7 +172,7 @@ climOnly_model_list <- list(
   repro_climOnly_best_mod = repro_climOnly_best_mod,
   nflrs_climOnly_best_mod = nflrs_climOnly_best_mod,
   growth_var_climOnly_best_mod = growth_var_climOnly_best_mod,
-  growth_var_climOnly_best_mod_data = growth_var_mod_data_scaled
+  growth_var_climOnly_best_mod_data = growth_var_climOnly_best_mod_data
 )
 
 mtOnly_model_list <- list(
