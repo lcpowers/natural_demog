@@ -55,18 +55,19 @@ nflrs_clim_formula <- as.formula(paste(c("total_flrs ~ log_size_t0*(year + site 
 nflrs_clim_mod <- glmer(nflrs_clim_formula, data = nflrs_mod_data_scaled, family = poisson, nAGQ = 0)
 ```
 
+
 ```{r climOnly_dredge}
 # Note: must not name the cluster 'cl' — MuMIn uses cl <- match.call() internally,
 # which causes a name collision that silently breaks parallel dispatch.
 clust <- makeCluster(30, type = "FORK")
 
-dredge_surv_climOnly <- dredge(surv_clim_mod, cluster = clust, fixed = c("log_size_t0"), trace = 2)
+dredge_surv_climOnly <- dredge(surv_clim_mod, cluster = clust, fixed = c("log_size_t0"), trace = 2, subset = !(ann_snow_days & win_meanT_mean) & !(ann_snow_days & gs_snow_days))
 
-dredge_growth_climOnly <- dredge(growth_clim_mod, cluster = clust, fixed = c("log_size_t0"), trace = 2)
+dredge_growth_climOnly <- dredge(growth_clim_mod, cluster = clust, fixed = c("log_size_t0"), trace = 2, subset = !(ann_snow_days & win_meanT_mean) & !(ann_snow_days & gs_snow_days))
 
-dredge_repro_climOnly <- dredge(repro_clim_mod, cluster = clust, fixed = c("log_size_t0"), trace = 2)
+dredge_repro_climOnly <- dredge(repro_clim_mod, cluster = clust, fixed = c("log_size_t0"), trace = 2, subset = !(ann_snow_days & win_meanT_mean) & !(ann_snow_days & gs_snow_days))
 
-dredge_nflrs_climOnly <- dredge(nflrs_clim_mod, cluster = clust, fixed = c("log_size_t0"), trace = 2)
+dredge_nflrs_climOnly <- dredge(nflrs_clim_mod, cluster = clust, fixed = c("log_size_t0"), trace = 2, subset = !(ann_snow_days & win_meanT_mean) & !(ann_snow_days & gs_snow_days))
 
 stopCluster(clust)
 ```
@@ -85,7 +86,7 @@ growth_var_clim_formula <- as.formula(paste(c("growth_resid.sq ~ log_size_t0*(ye
 growth_var_clim_mod <- lmer(growth_var_clim_formula, data = growth_var_mod_data_scaled, REML = FALSE, na.action = na.fail)
 
 clust <- makeCluster(30, type = "FORK")
-dredge_growth_var_climOnly <- dredge(growth_var_clim_mod, cluster = clust, fixed = c("log_size_t0", "year"), trace = 2)
+dredge_growth_var_climOnly <- dredge(growth_var_clim_mod, cluster = clust, fixed = c("log_size_t0"), trace = 2)
 stopCluster(clust)
 
 growth_var_climOnly_best_mod <- get.models(dredge_growth_var_climOnly, subset = 1)[[1]]
@@ -138,7 +139,7 @@ growth_var_mt_formula <- as.formula(paste(c("growth_resid.sq ~ log_size_t0*(year
 growth_var_mt_mod <- lmer(growth_var_mt_formula, data = growth_var_mod_data_scaled, REML = FALSE, na.action = na.fail)
 
 clust <- makeCluster(30, type = "FORK")
-dredge_growth_var_mtOnly <- dredge(growth_var_mt_mod, cluster = clust, fixed = c("log_size_t0", "year"), trace = 2)
+dredge_growth_var_mtOnly <- dredge(growth_var_mt_mod, cluster = clust, fixed = c("log_size_t0"), trace = 2)
 stopCluster(clust)
 
 growth_var_mtOnly_best_mod <- get.models(dredge_growth_var_mtOnly, subset = 1)[[1]]
