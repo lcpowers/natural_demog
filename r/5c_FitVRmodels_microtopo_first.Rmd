@@ -26,18 +26,22 @@ clim <- read_csv("data/climate/for_analyses/clim_summary.csv")
 clim_vars <- names(clim)[!names(clim) %in% c("site", "pop", "year")]
 
 ## See what variables were and were not included in mt only models, to reduce variable set if possible
-mt.mods <- readRDS("r/modelFitResults/best_mtOnly_mods_2026-04-11.RDS")
+mt.mods <- readRDS("r/modelFitResults/best_mtOnly_mods_2026-04-15.RDS")
 summary(mt.mods$surv_mtOnly_best_mod) # tpi, nrt 
 summary(mt.mods$growth_mtOnly_best_mod) # est, nrt
-summary(mt.mods$growth_var_mtOnly_best_mod) # est, nrt, tpi 
+summary(mt.mods$growth_var_mtOnly_best_mod) # est, nrt, prcv, tpi 
 summary(mt.mods$repro_mtOnly_best_mod) # est, nrt, tri
-summary(mt.mods$nflrs_mtOnly_best_mod) # est, nrt, plcv, tpi, tri
+summary(mt.mods$nflrs_mtOnly_best_mod) # est, nrt, plcv, prcv, tpi, tri
+# keep all 
 
 microtopo <- read_csv("data/output/model_microtopo_25cm.csv")
 mt_vars <- names(microtopo)[!names(microtopo) %in% c("site", "pop", "plantID","elv_pt")]
-mt_mod_vars = mt_vars # setdiff(mt_vars,"prcv_25")
+mt_mod_vars = mt_vars 
 
-corrplot(cor(microtopo[mt_vars]))
+# Add OLRE to nflrs mod data
+nflrs_mod_data_scaled$obs_id <- seq_len(nrow(nflrs_mod_data_scaled))
+
+# corrplot(cor(microtopo[mt_vars]))
 surv_mod_data_scaled$aspect.cat <- relevel(as.factor(surv_mod_data_scaled$aspect.cat), ref = "top")
 growth_mod_data_scaled$aspect.cat <- relevel(as.factor(growth_mod_data_scaled$aspect.cat), ref = "top")
 repro_mod_data_scaled$aspect.cat <- relevel(as.factor(repro_mod_data_scaled$aspect.cat), ref = "top")
@@ -65,26 +69,32 @@ repro_mt_formula <- as.formula(paste(c("flowered ~ log_size_t0*(year + site + as
 repro_mt_mod <- glmer(repro_mt_formula, data = repro_mod_data_scaled, family = binomial, nAGQ = 0)
 summary(repro_mt_mod)
 
-nflrs_mt_formula <- as.formula(paste(c("total_flrs ~ log_size_t0*(year + site + aspect.cat + ", paste(mt_mod_vars, collapse = " + "), ") + site*aspect.cat + (1|site.pop)"), collapse = " "))
+nflrs_mt_formula <- as.formula(paste(c("total_flrs ~ log_size_t0*(year + site + aspect.cat + ", paste(mt_mod_vars, collapse = " + "), ") + site*aspect.cat + (1|site.pop) + (1|obs_id)"), collapse = " "))
 nflrs_mt_mod <- glmer(nflrs_mt_formula, data = nflrs_mod_data_scaled, family = poisson, nAGQ = 0)
+
+# nflrs_mt_formula_olre <- as.formula(paste(c("total_flrs ~ log_size_t0*(year + site + aspect.cat + ", paste(mt_mod_vars, collapse = " + "), ") + site*aspect.cat + (1|site.pop) + (1|obs_id)"), collapse = " "))
+# nflrs_mt_olre_mod <- glmer(nflrs_mt_formula_olre, data = nflrs_mod_data_scaled, family = poisson, nAGQ = 0)
+# performance::check_overdispersion(nflrs_mt_mod)
+# performance::check_overdispersion(nflrs_mt_olre_mod)
+
 summary(nflrs_mt_mod)
 ```
 
 ```{r mt_dredge}
 # Note: must not name the cluster 'cl' — MuMIn uses cl <- match.call() internally,
 # which causes a name collision that silently breaks parallel dispatch.
-clust <- makeCluster(30, type = "FORK")
+clust <- makeCluster(40, type = "FORK")
 
-dredge_surv_mt <- dredge(surv_mt_mod, cluster = clust, fixed = c("log_size_t0"), trace = 2, # m.lim = c(0,15),
+dredge_surv_mt <- dredge(surv_mt_mod, cluster = clust, fixed = c("log_size_t0"), trace = 2, 
   subset = (est_25 + nrt_25 + tpi_25 + tri_25 + plcv_25 + prcv_25) <= 3)
 
-dredge_growth_mt <- dredge(growth_mt_mod, cluster = clust, fixed = c("log_size_t0"), trace = 2, # m.lim = c(0,15),
+dredge_growth_mt <- dredge(growth_mt_mod, cluster = clust, fixed = c("log_size_t0"), trace = 2, 
   subset = (est_25 + nrt_25 + tpi_25 + tri_25 + plcv_25 + prcv_25) <= 3)
 
-dredge_repro_mt <- dredge(repro_mt_mod, cluster = clust, fixed = c("log_size_t0"), trace = 2, # m.lim = c(0,15),
+dredge_repro_mt <- dredge(repro_mt_mod, cluster = clust, fixed = c("log_size_t0"), trace = 2, 
   subset = (est_25 + nrt_25 + tpi_25 + tri_25 + plcv_25 + prcv_25) <= 3)
 
-dredge_nflrs_mt <- dredge(nflrs_mt_mod, cluster = clust, fixed = c("log_size_t0"), trace = 2, # m.lim = c(0,15),
+dredge_nflrs_mt <- dredge(nflrs_mt_mod, cluster = clust, fixed = c("log_size_t0"), trace = 2, 
   subset = (est_25 + nrt_25 + tpi_25 + tri_25 + plcv_25 + prcv_25) <= 3)
 
 stopCluster(clust)
@@ -191,10 +201,10 @@ for(clim_var in clim_vars){
   cat(round(base_AICc,2) - round(AICc(mod_new),2),"\n")
 }
 
-
+# in order
 surv_clim_vars <- c("gs_meanT_range","gs_meanT_mean","gs_snow_days")
 growth_clim_vars <- c("gs_meanT_mean","gs_snow_days")
-nflrs_clim_vars <- c("gs_meanT_mean","gs_snow_days","win_meanT_range")
+nflrs_clim_vars <- c("gs_snow_days","win_meanT_range","gs_meanT_mean")
 repro_clim_vars <- c("gs_meanT_mean","gs_snow_days","win_meanT_range")
 ```
 
@@ -239,7 +249,7 @@ nflrs_mt_clim_formula <- as.formula(paste(
   "total_flrs ~ log_size_t0 * (year + site + aspect.cat + ",
   paste(c(nflrs_mt_vars, nflrs_clim_vars), collapse = " + "), ") + aspect.cat*site + (",
   paste(nflrs_mt_vars, collapse = " + "), ") * (",
-  paste(nflrs_clim_vars, collapse = " + "), ") + (1|site.pop)"
+  paste(nflrs_clim_vars, collapse = " + "), ") + (1|site.pop) + (1|obs_id)"
 ))
 nflrs_mt_clim_mod <- glmer(nflrs_mt_clim_formula, data = nflrs_mod_data_scaled, family = poisson, nAGQ = 0)
 formula(nflrs_mt_clim_mod)
@@ -249,19 +259,19 @@ length(attr(terms(nflrs_mt_clim_mod), "term.labels"))
 ```{r mt_clim_dredge}
 # Note: do not name the cluster 'cl' — MuMIn uses cl <- match.call() internally,
 # which causes a name collision that silently breaks parallel dispatch.
-clust <- makeCluster(32, type = "FORK")
+clust <- makeCluster(50, type = "FORK")
 
 # MT main effects are fixed; climate terms are dredgeable.
-dredge_surv_mt_clim <- dredge(surv_mt_clim_mod, cluster = clust, # m.lim = c(0,15),
+dredge_surv_mt_clim <- dredge(surv_mt_clim_mod, cluster = clust,# m.lim = c(0,20),
   fixed = c("log_size_t0", surv_mt_vars), trace = 2)
 
-dredge_growth_mt_clim <- dredge(growth_mt_clim_mod, cluster = clust, # m.lim = c(0,15),
+dredge_growth_mt_clim <- dredge(growth_mt_clim_mod, cluster = clust, # m.lim = c(0,20),
   fixed = c("log_size_t0", growth_mt_vars), trace = 2)
 
-dredge_repro_mt_clim <- dredge(repro_mt_clim_mod, cluster = clust, # m.lim = c(0,15),
+dredge_repro_mt_clim <- dredge(repro_mt_clim_mod, cluster = clust, # m.lim = c(0,20),
   fixed = c("log_size_t0", repro_mt_vars), trace = 2)
 
-dredge_nflrs_mt_clim <- dredge(nflrs_mt_clim_mod, cluster = clust, # m.lim = c(0,15),
+dredge_nflrs_mt_clim <- dredge(nflrs_mt_clim_mod, cluster = clust, # m.lim = c(0,20),
   fixed = c("log_size_t0", nflrs_mt_vars), trace = 2)
 
 stopCluster(clust)
@@ -291,10 +301,12 @@ growth_var_mt_clim_formula <- as.formula(paste(
   paste(growth_var_clim_vars, collapse = " + "), ") + (1|site.pop)"
 ))
 growth_var_mt_clim_mod <- lmer(growth_var_mt_clim_formula, data = growth_var_mod_data_scaled, REML = FALSE)
+formula(growth_var_mt_clim_mod)
+length(attr(terms(growth_var_mt_clim_mod), "term.labels"))
 
-clust <- makeCluster(40, type = "FORK")
+clust <- makeCluster(50, type = "FORK")
 
-dredge_growth_var_mt_clim <- dredge(growth_var_mt_clim_mod, cluster = clust,
+dredge_growth_var_mt_clim <- dredge(growth_var_mt_clim_mod, cluster = clust, m.lim = c(0,20),
   fixed = c("log_size_t0", growth_var_mt_main), trace = 2)
 
 stopCluster(clust)
