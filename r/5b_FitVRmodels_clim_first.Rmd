@@ -88,10 +88,12 @@ stopCluster(clust)
 ```
 
 ```{r clim_model_selection}
-surv_clim_best_mod <- update(get.models(dredge_surv_clim, subset = 1)[[1]], nAGQ = 1)
+surv_clim_best_mod <- update(get.models(dredge_surv_clim, subset = 1)[[1]], nAGQ = 1,
+  control = glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 2e5)))
 growth_clim_best_mod <- get.models(dredge_growth_clim, subset = 1)[[1]]
 repro_clim_best_mod <- update(get.models(dredge_repro_clim, subset = 1)[[1]], nAGQ = 1)
-nflrs_clim_best_mod <- update(get.models(dredge_nflrs_clim, subset = 1)[[1]], nAGQ = 1)
+nflrs_clim_best_mod <- update(get.models(dredge_nflrs_clim, subset = 1)[[1]], nAGQ = 1,
+  control = glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 2e5)))
 performance::r2(nflrs_clim_best_mod)
 ```
 
@@ -258,10 +260,12 @@ stopCluster(clust)
 ```
 
 ```{r mt_model_selection}
-surv_mt_best_mod <- update(get.models(dredge_surv_mt, subset = 1)[[1]], nAGQ = 1)
+surv_mt_best_mod <- update(get.models(dredge_surv_mt, subset = 1)[[1]], nAGQ = 1,
+  control = glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 2e5)))
 growth_mt_best_mod <- get.models(dredge_growth_mt, subset = 1)[[1]]
 repro_mt_best_mod <- update(get.models(dredge_repro_mt, subset = 1)[[1]], nAGQ = 1)
-nflrs_mt_best_mod <- update(get.models(dredge_nflrs_mt, subset = 1)[[1]], nAGQ = 1)
+nflrs_mt_best_mod <- update(get.models(dredge_nflrs_mt, subset = 1)[[1]], nAGQ = 1,
+  control = glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 2e5)))
 performance::r2(nflrs_mt_best_mod)
 ```
 
