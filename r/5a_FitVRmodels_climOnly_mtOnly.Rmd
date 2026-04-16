@@ -51,7 +51,7 @@ growth_clim_mod <- lmer(growth_clim_formula, data = growth_mod_data_scaled, REML
 repro_clim_formula <- as.formula(paste(c("flowered ~ log_size_t0*(year + site + aspect.cat + ", paste(clim_vars, collapse = " + "), " + site*aspect.cat) + (1|site.pop)"), collapse = " "))
 repro_clim_mod <- glmer(repro_clim_formula, data = repro_mod_data_scaled, family = binomial, nAGQ = 0)
 
-nflrs_clim_formula <- as.formula(paste(c("total_flrs ~ log_size_t0*(year + site + aspect.cat + ", paste(clim_vars, collapse = " + "), " + site*aspect.cat) + (1|site.pop)"), collapse = " "))
+nflrs_clim_formula <- as.formula(paste(c("total_flrs ~ log_size_t0*(year + site + aspect.cat + ", paste(clim_vars, collapse = " + "), " + site*aspect.cat) + (1|site.pop) + (1|obs_id)"), collapse = " "))
 nflrs_clim_mod <- glmer(nflrs_clim_formula, data = nflrs_mod_data_scaled, family = poisson, nAGQ = 0)
 ```
 
@@ -59,7 +59,7 @@ nflrs_clim_mod <- glmer(nflrs_clim_formula, data = nflrs_mod_data_scaled, family
 ```{r climOnly_dredge}
 # Note: must not name the cluster 'cl' — MuMIn uses cl <- match.call() internally,
 # which causes a name collision that silently breaks parallel dispatch.
-clust <- makeCluster(30, type = "FORK")
+clust <- makeCluster(40, type = "FORK")
 
 dredge_surv_climOnly <- dredge(surv_clim_mod, cluster = clust, fixed = c("log_size_t0"), trace = 2, subset = !(ann_snow_days & win_meanT_mean) & !(ann_snow_days & gs_snow_days))
 
@@ -106,7 +106,7 @@ growth_mt_mod <- lmer(growth_mt_formula, data = growth_mod_data_scaled, REML = F
 repro_mt_formula <- as.formula(paste(c("flowered ~ log_size_t0*(year + site + aspect.cat + ", paste(mt_mod_vars, collapse = " + "), ") + site*aspect.cat + (1|site.pop)"), collapse = " "))
 repro_mt_mod <- glmer(repro_mt_formula, data = repro_mod_data_scaled, family = binomial, nAGQ = 0)
 
-nflrs_mt_formula <- as.formula(paste(c("total_flrs ~ log_size_t0*(year + site + aspect.cat + ", paste(mt_mod_vars, collapse = " + "), ") + site*aspect.cat + (1|site.pop)"), collapse = " "))
+nflrs_mt_formula <- as.formula(paste(c("total_flrs ~ log_size_t0*(year + site + aspect.cat + ", paste(mt_mod_vars, collapse = " + "), ") + site*aspect.cat + (1|site.pop) + (1|obs_id)"), collapse = " "))
 nflrs_mt_mod <- glmer(nflrs_mt_formula, data = nflrs_mod_data_scaled, family = poisson, nAGQ = 0)
 ```
 
